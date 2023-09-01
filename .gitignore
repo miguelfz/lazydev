@@ -1,0 +1,6 @@
+# ignora arquivos compilados do Smarty template
+/template/compiled
+/vendor
+/log_errors.txt
+/composer.lock
+/lazyphpdev.code-workspace

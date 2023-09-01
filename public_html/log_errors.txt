@@ -1,0 +1,2 @@
+01/Sep/2023 10:36 - SQLSTATE[HY000] [1049] Unknown database 'asdf'
+

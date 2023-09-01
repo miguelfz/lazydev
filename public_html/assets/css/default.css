@@ -1,0 +1,77 @@
+:root {
+    --white: #FFF;
+    --black: #000;
+    --primary-color: #1b263b;
+    --secundary-color: #e0e1dd;
+    --secundary-color-varation:#778da9;
+    --link-color:#d90429;
+    --link-acetive-color:#ef233c;
+    scroll-behavior: smooth;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--primary-color);
+    color: var(--primary-color);
+    font-family: Arial, Helvetica, sans-serif;
+    color:var(--secundary-color)
+}
+
+a:any-link{
+    color: var(--link-color);
+    text-decoration: none;
+}
+
+a.active{
+    font-weight: bold;
+    color: var(--link-acetive-color);
+    text-decoration: underline;
+}
+
+.container {
+    background-color: var(--white);
+    width: clamp(350px, 95%, 1440px);
+    margin: auto;
+    color:var(--primary-color);
+}
+
+.container>* {
+    border: 1px solid var(--primary-color);
+    padding: 30px;
+}
+
+nav {
+    background-color: var(--secundary-color-varation);
+    display: flex;
+    justify-content: space-around;
+    position: sticky;
+    top: 0
+}
+
+footer {
+    text-align: center;
+}
+
+.pagination{
+    display: flex;
+    justify-content: center;
+    padding: 10px;
+    border-top:1px solid var(--secundary-color);
+}
+
+.pagination a{
+    margin:0 15px;
+}
+
+/* forms */
+form > div{
+    padding:20px 0;
+}
+
+input:not([type=checkbox]):not([type=radio]){
+    width: 100%;
+    padding:10px;
+}

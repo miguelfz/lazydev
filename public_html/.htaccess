@@ -1,0 +1,5 @@
+<IfModule mod_rewrite.c>
+   RewriteEngine On
+	RewriteCond %{SCRIPT_FILENAME} !-f
+	RewriteRule ^(.*)$ index.php?_urlf=1&_url=$1 [QSA]
+</IfModule>

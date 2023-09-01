@@ -1,0 +1,22 @@
+{
+    "name": "miguel/lazydev",
+    "description": "Framework simples e didático para pequenos projetos com BD relacional. Muito utilizado por alunos preguiçosos.",
+    "type": "project",
+    "require": {
+        "smarty/smarty": "^4.3"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Lazydev\\Core\\": "core/",
+            "Lazydev\\Controller\\": "controller/",            
+            "Lazydev\\Model\\": "model/",            
+            "Lazydev\\View\\": "view/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Miguel Zarth"
+        }
+    ]
+}
