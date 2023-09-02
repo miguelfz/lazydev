@@ -9,9 +9,9 @@ class Msg
      * Mostra uma mensagem na próxima renderização de uma view
      * 
      * @param String $msg
-     * @param int $tipo {1,2,3,4}  1=Success, 2=Warning, 3=Error, 4=Notice, 5, debug, default=Info
+     * @param int $tipo {1,2,3,4,5,6}  1=Success, 2=Warning, 3=Error, 4=Notice, 5=debug, 6(default)=Info
      */
-    function __construct($msg, $tipo = 5)
+    function __construct($msg, $tipo = 6)
     {
         switch ($tipo) {
             case 1:
@@ -52,7 +52,7 @@ class Msg
         $template = '<div class="alertContainer">';
         $template .= '<input type="checkbox" id="'.$id.'" class="alertCheckbox" autocomplete="off">';
         $template .= '<div class="alert ' . $class . '" role="alert">';        
-        $template .= '<label class="alertClose" for="'.$id.'">X</label>';
+        $template .= '<label class="alertClose" for="'.$id.'">&times;</label>';
         $template .= '<span class="alertText">' . $msg . '<br class="clear"></span>';
         $template .= '</div>';
         $template .=  '</div>';

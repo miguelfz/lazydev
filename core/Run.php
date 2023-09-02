@@ -13,6 +13,7 @@ class Run
     {
         require  __DIR__ .'/../config.php';        
         session_start();
+        define('PATH', preg_replace('/\\\\|\/$/', '', dirname($_SERVER["SCRIPT_NAME"])));
         $url = filter_input(INPUT_GET, '_url', FILTER_SANITIZE_URL);
         $this->urlArr = $url ? explode("/", $url) : [];
         $this->params = count($this->urlArr);
@@ -21,12 +22,11 @@ class Run
         $this->setRoute();    
         $this->setGlobals();
 
-        if (!$this->controller || !file_exists(__DIR__ . '/../controller/' . $this->controller . '.php')) {
+        if (!$this->controller || !$this->method || !file_exists(__DIR__ . '/../controller/' . $this->controller . '.php')) {
             $c = new Controller;
             $c->render('404');
             exit;
         }
-
         $this->controller = "\Lazydev\Controller\\$this->controller";    
         $c = new $this->controller;        
         $this->setParams($c);
@@ -50,6 +50,9 @@ class Run
         } elseif (file_exists(__DIR__ . '/../controller/' . $this->urlArr[0] . '.php')) {
             $this->controller = array_shift($this->urlArr);
         }
+        else{
+            new Msg("Não foi possível chamar este controller. Classe ou arquivo não encontrado não encontrado.",5);
+        }
     }
 
     private function setAction()
@@ -59,6 +62,9 @@ class Run
             $this->method = Config::get('indexAction');
         } elseif (count($this->urlArr) && method_exists('\Lazydev\Controller\\'.$this->controller, $this->urlArr[0])) {
             $this->method = array_shift($this->urlArr);
+        }
+        else{
+            new Msg("Método não encontrado ou não definido no controller $this->controller",5);
         }
     }
 
@@ -77,8 +83,7 @@ class Run
     }
 
     private function setGlobals()
-    {
-        define('PATH', preg_replace('/\\\\|\/$/', '', dirname($_SERVER["SCRIPT_NAME"])));
+    {        
         define('CONTROLLER', $this->controller);
         define('ACTION', $this->method);
         define('URLF',filter_input(INPUT_GET, '_urlf', FILTER_SANITIZE_NUMBER_INT));
