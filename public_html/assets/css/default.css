@@ -1,3 +1,6 @@
+@import "alerts.css";
+@import "breadcrumb.css";
+
 :root {
     --white: #FFF;
     --black: #000;
