@@ -78,7 +78,7 @@
   .debugMsg {
     background-color: #EEE;
     border: 1px solid #DDD;
-    color: #999;
+    color: #555;
   }
 
   .debugMsg .alertText{

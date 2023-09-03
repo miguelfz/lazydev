@@ -17,7 +17,7 @@ Config::set('db_user', 'root');
 Config::set('db_password', '');
 # nome do banco de dados:
 
-Config::set('db_name', 'faculmatch');
+Config::set('db_name', 'filmes');
 
 
 ##################################
@@ -39,7 +39,7 @@ Config::set('indexController', 'Inicio');
 Config::set('indexAction', 'inicio');
 
 # parâmetros get criptografados
-Config::set('criptedGetParamns', [0, 'url']);
+Config::set('criptedGetParamns', []);
 
 
 ##################################

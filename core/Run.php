@@ -27,6 +27,12 @@ class Run
             $c->render('404');
             exit;
         }
+        if(!file_exists(__DIR__ . "/../view/$this->controller/$this->method.php") && !file_exists(__DIR__ . "/../view/$this->controller/$this->method.tpl") && !file_exists(__DIR__ . "/../view/$this->controller/$this->method.html")){
+            $c = new Controller;
+            new Msg("Arquivo de view não encontrado.<br>Esperado /../view/$this->controller/$this->method.[ tpl | php | html ]",5);
+            $c->render('404');
+            exit;
+        }
         $this->controller = "\Lazydev\Controller\\$this->controller";    
         $c = new $this->controller;        
         $this->setParams($c);

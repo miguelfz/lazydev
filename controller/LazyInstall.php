@@ -1,36 +1,57 @@
 <?php
+
 namespace Lazydev\Controller;
 
-class LazyInstall extends \Lazydev\Core\Controller{
-
-    private $tableSchema;
-    private $dbschema;
+class LazyInstall extends \Lazydev\Core\Controller
+{
 
     function __construct()
     {
-        if(!\Lazydev\Core\Config::get("debug")){
+        if (!\Lazydev\Core\Config::get("debug")) {
             die('O instalador só é permitido com o modo de debug habilitado no /config');
         }
     }
-    
-    public function inicio() {
-        $this->setTitle('Iniciar Instalação');      
-        $this->set("tables", $this->getTables());        
+
+    public function inicio()
+    {
+        $this->setTitle('Iniciar Instalação');
+        $db = [];
+        $tables = $this->getTables();
+        foreach ($tables as $t) {
+            $db[$t->name] = $this->getTableSchema($t->name);
+        }
+        echo '<pre>';
+        print_r($db);
+        exit;
+        $this->set("tables", $this->getTables());
         $this->set("lazyjson", $this->getLazyJson());
     }
 
-    private function getLazyJson() {
-        if(file_exists(__DIR__ . '/../lazy.json')){
+    public function model()
+    {
+        $this->setTitle('Iniciar Instalação');
+        $this->set("tables", $this->getTables());
+        $this->set("lazyjson", $this->getLazyJson());
+        $this->set("modelName", $this->getParam(0));
+        $this->set("model", $this->getTableSchema($this->getParam(0)));
+    }
+
+
+    private function getLazyJson()
+    {
+        if (file_exists(__DIR__ . '/../lazy.json')) {
             return json_decode(file_get_contents(__DIR__ . '/../lazy.json'));
         }
         return [];
     }
 
-    private function getTables() {
-        return $this->query('SELECT table_name AS name FROM information_schema.tables WHERE table_schema = DATABASE()');
+    private function getTables()
+    {
+        return $this->query('SELECT table_name AS `name` FROM information_schema.tables WHERE table_schema = DATABASE()');
     }
 
-    private function getPlural($nome) {
+    private function getPlural($nome)
+    {
         if (substr($nome, -1) == "s") {
             return $nome;
         }
@@ -49,39 +70,31 @@ class LazyInstall extends \Lazydev\Core\Controller{
         return $nome . "s";
     }
 
-    private function getDbSchema() {
-        if (is_null($this->dbschema)) {
-            $data = $this->query('select database() as db');
-            $db = $data[0]->db;
-            $data = $this->query("SELECT table_name AS 'table',  column_name AS  'fk', 
-            referenced_table_name AS 'reftable', referenced_column_name  AS 'refpk' 
-            FROM information_schema.key_column_usage
-            WHERE referenced_table_name IS NOT NULL 
-            AND TABLE_SCHEMA='" . $db . "' ");
-            $this->dbschema = $data;
-        }
-        return $this->dbschema;
-    }
-
-    private function getTableSchema($table) {
-        if (!isset($this->tableSchema[$table])) {
-            return $this->tableSchema[$table] = $this->query('describe ' . $table);
-        }
-        return $this->tableSchema[$table];
-    }
-
-    private function getPrimaryKey($tableName) {
-        $tableschema = $this->getTableSchema($tableName);
+    private function getTableSchema($table)
+    {
+        $tableschema = $this->query("DESCRIBE `$table`");
+        $pk = [];
         foreach ($tableschema as $f) {
             if ($f->Key == 'PRI') {
-                return $f;
+                $pk[] = $f->Field;
             }
         }
-        return NULL;
+        $tableschema['pk'] = $pk;
+        $tableschema['fk'] = $this->getFKs($table);
+        return $tableschema;
     }
 
-    private function nlt($n=1) {
-        return "\n".str_repeat(" ",4*$n);
+    private function getFKs($table)
+    {
+        return $this->query("SELECT table_name AS `table`,  column_name AS  `fk`, 
+        referenced_table_name AS `reftable`, referenced_column_name  AS `refpk` 
+        FROM information_schema.key_column_usage
+        WHERE referenced_table_name IS NOT NULL 
+        AND TABLE_SCHEMA=(SELECT database() AS db)  AND `table_name`='$table'");
     }
 
+    private function nlt($n = 1)
+    {
+        return "\n" . str_repeat(" ", 4 * $n);
+    }
 }

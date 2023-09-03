@@ -15,8 +15,11 @@
 <h3>Tabelas</h3>
 <div class="">
     {foreach $tables as $t}
-        <div><span>&#10003;</span> {$t->name}</div>
+        <div style="padding:10px; border-bottom:1px dotted #CCC;">
+            <a href="{PATH}/LazyInstall/model/{$t->name}"><span>&#10003;</span> {$t->name}</a>
+        </div>
     {foreachelse}
         <p>Nenhuma tabela encontrada. Verifique o arquivo /config</p>
     {/foreach}
 </div>
+<hr>

@@ -2,6 +2,8 @@
 
 namespace Lazydev\Core;
 
+use Exception;
+
 class Cript
 {
     private static $method = "AES-256-CBC";
@@ -10,7 +12,12 @@ class Cript
 
     public static function cript($data)
     {
-        return base64_encode(openssl_encrypt($data, self::$method, self::$key, 0, self::$iv));
+        try{
+            return base64_encode(openssl_encrypt($data, self::$method, self::$key, 0, self::$iv));
+        } catch (\Exception $exc) {
+            new Msg("Não foi possível criptografar ".serialize($data), 5);
+            return $data;
+        }
     }
 
     public static function decript($data)
@@ -19,8 +26,13 @@ class Cript
             return $data;
         }
         try {
-            return openssl_decrypt(base64_decode($data), self::$method, self::$key, 0, self::$iv);
+            $decString = openssl_decrypt(base64_decode($data), self::$method, self::$key, 0, self::$iv);
+            if(!$decString){
+                throw new Exception("");
+            }
+            return $decString;
         } catch (\Exception $exc) {
+            new Msg("Não foi possível descriptografar ".serialize($data),5);
             return $data;
         }
     }

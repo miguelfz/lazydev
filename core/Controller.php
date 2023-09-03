@@ -181,7 +181,7 @@ class Controller
      * 
      * @param String $sqlQuery
      * @param String $className - [opcional] nome de uma classe existente para Casting dos objetos do resultado
-     * @return boolean ou array de objetos
+     * @return \ArrayObject ou array de objetos | false
      */
     protected function query($sqlQuery, $className = NULL)
     {
