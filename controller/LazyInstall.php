@@ -2,6 +2,8 @@
 
 namespace Lazydev\Controller;
 
+use Lazydev\Core\Msg;
+
 class LazyInstall extends \Lazydev\Core\Controller
 {
 
@@ -15,15 +17,12 @@ class LazyInstall extends \Lazydev\Core\Controller
     public function inicio()
     {
         $this->setTitle('Iniciar Instalação');
-        $db = [];
-        $tables = $this->getTables();
-        foreach ($tables as $t) {
-            $db[$t->name] = $this->getTableSchema($t->name);
+        if (!\Lazydev\Core\Config::get('db_name')) {
+            new Msg('Banco de dados não especificado no arquivo de configuração', 3);
         }
         echo '<pre>';
-        print_r($db);
-        exit;
-        $this->set("tables", $this->getTables());
+        print_r($this->getDbSchema());
+        $this->set("db", $this->getDbSchema());
         $this->set("lazyjson", $this->getLazyJson());
     }
 
@@ -33,7 +32,6 @@ class LazyInstall extends \Lazydev\Core\Controller
         $this->set("tables", $this->getTables());
         $this->set("lazyjson", $this->getLazyJson());
         $this->set("modelName", $this->getParam(0));
-        $this->set("model", $this->getTableSchema($this->getParam(0)));
     }
 
 
@@ -43,11 +41,6 @@ class LazyInstall extends \Lazydev\Core\Controller
             return json_decode(file_get_contents(__DIR__ . '/../lazy.json'));
         }
         return [];
-    }
-
-    private function getTables()
-    {
-        return $this->query('SELECT table_name AS `name` FROM information_schema.tables WHERE table_schema = DATABASE()');
     }
 
     private function getPlural($nome)
@@ -70,18 +63,35 @@ class LazyInstall extends \Lazydev\Core\Controller
         return $nome . "s";
     }
 
-    private function getTableSchema($table)
+    private function getDbSchema()
     {
-        $tableschema = $this->query("DESCRIBE `$table`");
-        $pk = [];
-        foreach ($tableschema as $f) {
-            if ($f->Key == 'PRI') {
-                $pk[] = $f->Field;
+        $db = [];
+        $tables = $this->getTables();
+        foreach ($tables as $table) {
+            $tableschema = $this->query("DESCRIBE `$table->name`");
+            $pk = [];
+            $fks = $this->getFKs($table->name);
+            foreach ($tableschema as $f) {
+                if ($f->Key == 'PRI') {
+                    $pk[] = $f->Field;
+                }
+                $f->fk = 0;
+                foreach($fks as $fk){
+                    if($fk->fk==$f->Field){
+                        $f->fk = 1;
+                    }
+                }
             }
+            $tableschema['pk'] = $pk;
+            $tableschema['fk'] = $fks;
+            $db[$table->name] = $tableschema;
         }
-        $tableschema['pk'] = $pk;
-        $tableschema['fk'] = $this->getFKs($table);
-        return $tableschema;
+        return $db;
+    }
+
+    private function getTables()
+    {
+        return $this->query('SELECT table_name AS `name` FROM information_schema.tables WHERE table_schema = DATABASE()');
     }
 
     private function getFKs($table)
