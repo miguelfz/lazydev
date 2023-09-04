@@ -1,5 +1,6 @@
 <h1>Configurando {$tableName}</h1>
 <form method="post">
+<input type="hidden" name="model" value="{$tableName}">
     {* especificações semânticas *}
     <div style="padding:10px; border:1px dotted #CCC;margin:10px">
         <h3>Especificações Gerais:</h3>
@@ -14,28 +15,28 @@
                     <tr>
                         {if $m->fk neq '0'}
                             <td width="20%" style="color:red">
-                                <label for="tipo_{$tableName}_{$m->Field}"><strong>{$m->Field} {$m->Key} (FK)</strong></label>
+                                <label for="label_{$m->Field}"><strong>{$m->Field} {$m->Key} (FK)</strong></label>
                                 <div><small>{$m->Type}</small></div>
                             </td>
                             <td>
-                                <input type="text" spellcheck="true" value="{$m->fk}" name="label_{$tableName}_{$m->Field}">
+                                <input type="text" spellcheck="true" value="{$m->fk}" id="label_{$m->Field}" name="label_{$m->Field}">
                             </td>
                             <td>
-                                <select name="tipo_{$tableName}_{$m->Field}" id="finalidade">
+                                <select name="finalidade_{$m->Field}" id="finalidade_{$m->Field}">
                                     <option value="selectFK">Select option</option>
                                     <option value="radioFK">Input radio</option>
                                 </select>
                             </td>
                         {else}
                             <td width="20%">
-                                <label for="tipo_{$tableName}_{$m->Field}"><strong>{$m->Field} {$m->Key}</strong></label>
+                                <label for="label_{$m->Field}"><strong>{$m->Field} {$m->Key}</strong></label>
                                 <div><small>{$m->Type}</small></div>
                             </td>
                             <td>
-                                <input type="text" spellcheck="true" value="{$m->Field}" name="label_{$tableName}_{$m->Field}">
+                                <input type="text" spellcheck="true" id="label_{$m->Field}" value="{$m->Field}" name="label_{$m->Field}">
                             </td>
                             <td>
-                                <select name="tipo_{$tableName}_{$m->Field}" id="finalidade">
+                                <select name="finalidade_{$m->Field}" id="finalidade_{$m->Field}">
                                     <option value="text">linha de texto geral</option>
                                     <option value="html" {if $m->InputType eq 'html'}selected{/if}>texto longo com HTML</option>
                                     <option value="number" {if $m->InputType eq 'number'}selected{/if}>número</option>
@@ -75,10 +76,10 @@
                 {if $key neq 'pk' and  $key neq 'fk'}
                     <tr>
                         <td style="text-align: center;">
-                            <input type="checkbox" name="ver_{$tableName}_{$m->Field}" id="ver_{$tableName}_{$m->Field}" checked>
+                            <input type="checkbox" name="ver_{$m->Field}" id="ver_{$m->Field}" checked>
                         </td>
                         <td>
-                            <label for="ver_{$tableName}_{$m->Field}" id="ver_{$tableName}_{$m->Field}">{$m->Field}</label>
+                            <label for="ver_{$m->Field}">{$m->Field}</label>
                         </td>
                         <td>
                             {if $m->fk neq '0'}
@@ -101,15 +102,15 @@
                 {foreach $m['fk'] as $fk}
                     {if $fk->reftable eq $tableName}
                         <tr>
-                        <td style="text-align: center;">
-                            <input type="checkbox" name="verLista_{$key}_{$m->Field}" id="verLista_{$key}_{$m->Field}" checked>
-                        </td>
-                        <td>
-                            <label for="ver_{$tableName}_{$m->Field}" id="ver_{$tableName}_{$m->Field}">
-                            Lista de {$fk->table}(s)</label>
-                        </td>
-                        <td>
-                        </td>
+                            <td style="text-align: center;">
+                                <input type="checkbox" name="verLista_{$key}_{$fk->fk}" id="verLista_{$key}_{$fk->fk}" checked>
+                            </td>
+                            <td>
+                                <label for="ver_{$key}_{$fk->fk}">
+                                    Lista de {$fk->table}(s)</label>
+                            </td>
+                            <td>
+                            </td>
                         </tr>
                     {/if}
                 {/foreach}
@@ -121,6 +122,42 @@
     <div style="padding:10px; border:1px dotted #CCC;margin:10px">
         <h3>Página listar</h3>
     </div>
+
+    {* especificações página ver *}
+    <div style="padding:10px; border:1px dotted #CCC;margin:10px">
+        <h3>Arquivos</h3>
+        <p>Escolha quais arquivos serão criados/sobrescritos.</p>
+
+        <div style="margin: 15px;">
+            <input type="checkbox" name="createmodel" id="createmodel" checked>
+            <label for="createmodel">/Model/{$tableName|capitalize}.php</label>
+        </div>
+        <div style="margin: 15px;">
+            <input type="checkbox" name="createcontroller" id="createcontroller" checked>
+            <label for="createcontroller">/Controller/{$tableName|capitalize}.php</label>
+        </div>
+        <div style="margin: 15px;">
+            <input type="checkbox" name="createlista" id="createlista" checked>
+            <label for="createlista">/View/{$tableName|capitalize}/lista.tpl</label>
+        </div>        
+        <div style="margin: 15px;">
+            <input type="checkbox" name="createcadastrar" id="createcadastrar" checked>
+            <label for="createcadastrar">/View/{$tableName|capitalize}/cadastrar.tpl</label>
+        </div>
+        <div style="margin: 15px;">
+            <input type="checkbox" name="createver" id="createver" checked>
+            <label for="createver">/View/{$tableName|capitalize}/ver.tpl</label>
+        </div>
+        <div style="margin: 15px;">
+            <input type="checkbox" name="createeditar" id="createeditar" checked>
+            <label for="createeditar">/View/{$tableName|capitalize}/editar.tpl</label>
+        </div>
+        <div style="margin: 15px;">
+            <input type="checkbox" name="createapagar" id="createapagar" checked>
+            <label for="createapagar">/View/{$tableName|capitalize}/apagar.tpl</label>
+        </div>
+    </div>
+
     {* botão salvar *}
     <div>
         <input type="submit" value="Salvar">
