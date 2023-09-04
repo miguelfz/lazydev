@@ -20,18 +20,18 @@ class LazyInstall extends \Lazydev\Core\Controller
         if (!\Lazydev\Core\Config::get('db_name')) {
             new Msg('Banco de dados não especificado no arquivo de configuração', 3);
         }
-        echo '<pre>';
-        print_r($this->getDbSchema());
         $this->set("db", $this->getDbSchema());
         $this->set("lazyjson", $this->getLazyJson());
     }
 
     public function model()
     {
-        $this->setTitle('Iniciar Instalação');
-        $this->set("tables", $this->getTables());
+        $this->setTitle('Criar modelo');
+        $dbSchema = $this->getDbSchema();
+        $this->set("dbSchema", $dbSchema);
+        $this->set("tableSchema", $dbSchema[$this->getParam(0)]);
+        $this->set("tableName", $this->getParam(0));
         $this->set("lazyjson", $this->getLazyJson());
-        $this->set("modelName", $this->getParam(0));
     }
 
 
@@ -72,13 +72,30 @@ class LazyInstall extends \Lazydev\Core\Controller
             $pk = [];
             $fks = $this->getFKs($table->name);
             foreach ($tableschema as $f) {
+                $f->InputType = '';
+                if (strstr($f->Type, 'int(1)')) {
+                    $f->InputType = 'checkbox';
+                } elseif (strstr($f->Type, 'int')) {
+                    $f->InputType = 'number';
+                } elseif (strpos($f->Type, 'decimal') !== false) {
+                    $f->InputType = 'number';
+                } elseif ($f->Type == 'date') {
+                    $f->InputType = 'date';
+                } elseif ($f->Type == 'datetime') {
+                    $f->InputType = 'now';
+                } elseif ($f->Type == 'time') {
+                    $f->InputType = 'time';
+                } elseif (strstr($f->Type, 'text')) {
+                    $f->InputType = 'html';
+                }
+
                 if ($f->Key == 'PRI') {
                     $pk[] = $f->Field;
                 }
                 $f->fk = 0;
                 foreach($fks as $fk){
                     if($fk->fk==$f->Field){
-                        $f->fk = 1;
+                        $f->fk = $fk->reftable;
                     }
                 }
             }
