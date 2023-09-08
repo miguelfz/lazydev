@@ -1,6 +1,6 @@
 <h1>Configurando {$tableSchema['name']}</h1>
 <form method="post">
-    <input type="hidden" name="model" value="{$tableSchema['name']}">
+    <input type="hidden" name="table" value="{$tableSchema['name']}">
 
     {* especificações arquivos gerados *}
     <div style="padding:30px; border:2px solid #CCC;margin:10px">

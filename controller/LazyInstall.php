@@ -24,7 +24,7 @@ class LazyInstall extends \Lazydev\Core\Controller
         $this->set("lazyjson", $this->getLazyJson());
     }
 
-    public function model()
+    public function table()
     {
         $this->setTitle('Criar modelo');
         $dbSchema = $this->getDbSchema();
@@ -33,11 +33,12 @@ class LazyInstall extends \Lazydev\Core\Controller
         $this->set("lazyjson", $this->getLazyJson());
     }
     
-    public function post_model()
+    public function post_table()
     {
-        $model = filter_input(INPUT_POST, 'model');
+        $table = filter_input(INPUT_POST, 'model');
+        $dbSchema = $this->getDbSchema();
         if (filter_input(INPUT_POST, 'createmodel')) {
-            $this->cretateModel($model);
+            $this->cretateModel($table, $dbSchema);
         }
         if (filter_input(INPUT_POST, 'createcontroller')) {
             echo ('cria controller');
@@ -45,14 +46,13 @@ class LazyInstall extends \Lazydev\Core\Controller
         exit;
     }
 
-    private function cretateModel(string $table)
+    private function cretateModel(string $table, $dbSchema)
     {
-        $schema = $this->getDbSchema()[$table];
-        $pks = $schema['pk'];
-        $fks = $schema['fk'];
-        unset($schema['pk']);
-        unset($schema['fk']);
-        $model = ucfirst($table);
+        $tableSchema = $dbSchema[$table];
+        $pks = $tableSchema['pk'];
+        $fks = $tableSchema['fk'];
+        $fields = $tableSchema['fields'];
+        $model = ucfirst($tableSchema['name']);
         $handle = fopen("../model/$model.php", 'w');
         if (!$handle) {
             new Msg("Não foi possível criar o model $model. Verifique as permissões do diretório", 3);
