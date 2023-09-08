@@ -20,7 +20,7 @@ class LazyInstall extends \Lazydev\Core\Controller
         if (!\Lazydev\Core\Config::get('db_name')) {
             new Msg('Banco de dados não especificado no arquivo de configuração', 3);
         }
-        $this->set("db", $this->getDbSchema());
+        $this->set("tables", $this->getTables());
         $this->set("lazyjson", $this->getLazyJson());
     }
 
@@ -30,8 +30,50 @@ class LazyInstall extends \Lazydev\Core\Controller
         $dbSchema = $this->getDbSchema();
         $this->set("dbSchema", $dbSchema);
         $this->set("tableSchema", $dbSchema[$this->getParam(0)]);
-        $this->set("tableName", $this->getParam(0));
         $this->set("lazyjson", $this->getLazyJson());
+    }
+    
+    public function post_model()
+    {
+        $model = filter_input(INPUT_POST, 'model');
+        if (filter_input(INPUT_POST, 'createmodel')) {
+            $this->cretateModel($model);
+        }
+        if (filter_input(INPUT_POST, 'createcontroller')) {
+            echo ('cria controller');
+        }
+        exit;
+    }
+
+    private function cretateModel(string $table)
+    {
+        $schema = $this->getDbSchema()[$table];
+        $pks = $schema['pk'];
+        $fks = $schema['fk'];
+        unset($schema['pk']);
+        unset($schema['fk']);
+        $model = ucfirst($table);
+        $handle = fopen("../model/$model.php", 'w');
+        if (!$handle) {
+            new Msg("Não foi possível criar o model $model. Verifique as permissões do diretório", 3);
+            return;
+        }
+        fwrite($handle, "<?php");
+        fwrite($handle, "{$this->nlt(0)}namespace Lazydev\Model;\n");
+        fwrite($handle, "{$this->nlt(0)}final class $model extends \Lazydev\Core\Record{ \n");
+        $pk = count($pks) > 1 ? '[\'' . implode('\', \'', $pks) . '\']' : '\'' . array_shift($pks) . '\'';
+        # contantes
+        fwrite($handle, $this->nlt(1) . "const TABLE = '$table'; # tabela de referência");
+        fwrite($handle, $this->nlt(1) . "const PK = $pk; # chave primária");
+        # atributos do modelo
+        fwrite($handle, $this->nlt(1));
+        foreach ($schema as $f) {
+            fwrite($handle, $this->nlt(1) . 'public $' . $f->Field . ';');
+        }
+
+        # fim da classe        
+        fwrite($handle, $this->nlt(0) . "}");
+        fclose($handle);
     }
 
 
@@ -71,8 +113,10 @@ class LazyInstall extends \Lazydev\Core\Controller
             $tableschema = $this->query("DESCRIBE `$table->name`");
             $pk = [];
             $fks = $this->getFKs($table->name);
+            $selected = 'selected';
             foreach ($tableschema as $f) {
                 $f->InputType = '';
+                $f->selected = '';
                 if (strstr($f->Type, 'int(1)')) {
                     $f->InputType = 'checkbox';
                 } elseif (strstr($f->Type, 'int')) {
@@ -88,20 +132,26 @@ class LazyInstall extends \Lazydev\Core\Controller
                 } elseif (strstr($f->Type, 'text')) {
                     $f->InputType = 'html';
                 }
+                else{
+                    $f->InputType = 'text';
+                    $f->selected = $selected;
+                    $selected = '';
+                }
 
                 if ($f->Key == 'PRI') {
                     $pk[] = $f->Field;
                 }
                 $f->fk = 0;
-                foreach($fks as $fk){
-                    if($fk->fk==$f->Field){
+                foreach ($fks as $fk) {
+                    if ($fk->fk == $f->Field) {
                         $f->fk = $fk->reftable;
                     }
                 }
             }
-            $tableschema['pk'] = $pk;
-            $tableschema['fk'] = $fks;
-            $db[$table->name] = $tableschema;
+            $db[$table->name]['fields'] = (array)$tableschema;
+            $db[$table->name]['pk'] = $pk;
+            $db[$table->name]['fk'] = (array)$fks;
+            $db[$table->name]['name'] = $table->name;
         }
         return $db;
     }

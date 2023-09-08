@@ -1,4 +1,5 @@
 @import "alerts.css";
+@import "form.css";
 @import "breadcrumb.css";
 
 :root {
@@ -48,12 +49,13 @@ table{
     border: 1px solid var(--primary-color);
 }
 
-tr:nth-child(even){
+tr:hover{
     background-color: var(--secundary-color);
 }
 
 th, td{
     padding:10px;
+    border-bottom:1px dotted var(--secundary-color);
 }
 
 th{
@@ -86,21 +88,4 @@ footer {
 
 .pagination a{
     margin:0 15px;
-}
-
-/* forms */
-form > div{
-    padding:20px 0;
-}
-
-input:not([type=checkbox]):not([type=radio]), select, textarea{
-    width: 100%;
-    padding:10px;
-}
-
-input[type=submit], button{
-    background-color: var(--primary-color);
-    font-family: Arial, Helvetica, sans-serif;
-    color:var(--secundary-color);
-    border: 1px solid var(--black);
 }

@@ -24,7 +24,7 @@ abstract class Record
     public function __construct($pk = NULL)
     {
         if (!is_null($pk)) {
-            if (!$this->load((int) $pk)) {
+            if (!$this->load($pk)) {
                 throw new \Exception('Não foi possível localizar na tabela <strong>' . $this::TABLE . '</strong> o identificador ' . $pk);
             }
         }
