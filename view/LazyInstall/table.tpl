@@ -9,11 +9,11 @@
 
         <div style="margin: 15px;">
             <input type="checkbox" name="createmodel" id="createmodel" checked>
-            <label for="createmodel">/Model/{$tableSchema['name']|capitalize}.php</label>
+            <label for="createmodel" style="font-weight: bold;">/Model/{$tableSchema['name']|capitalize}.php</label>
         </div>
         <div style="margin: 15px;">
             <input type="checkbox" name="createcontroller" id="createcontroller" checked>
-            <label for="createcontroller">/Controller/{$tableSchema['name']|capitalize}.php</label>
+            <label for="createcontroller" style="font-weight: bold;">/Controller/{$tableSchema['name']|capitalize}.php</label>
         </div>
         <div style="margin: 15px;">
             <input type="checkbox" name="createlista" id="createlista" checked>

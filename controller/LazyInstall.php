@@ -32,10 +32,10 @@ class LazyInstall extends \Lazydev\Core\Controller
         $this->set("tableSchema", $dbSchema[$this->getParam(0)]);
         $this->set("lazyjson", $this->getLazyJson());
     }
-    
+
     public function post_table()
     {
-        $table = filter_input(INPUT_POST, 'model');
+        $table = filter_input(INPUT_POST, 'table');
         $dbSchema = $this->getDbSchema();
         if (filter_input(INPUT_POST, 'createmodel')) {
             $this->cretateModel($table, $dbSchema);
@@ -58,6 +58,7 @@ class LazyInstall extends \Lazydev\Core\Controller
             new Msg("Não foi possível criar o model $model. Verifique as permissões do diretório", 3);
             return;
         }
+        # namespace e classe
         fwrite($handle, "<?php");
         fwrite($handle, "{$this->nlt(0)}namespace Lazydev\Model;\n");
         fwrite($handle, "{$this->nlt(0)}final class $model extends \Lazydev\Core\Record{ \n");
@@ -67,9 +68,81 @@ class LazyInstall extends \Lazydev\Core\Controller
         fwrite($handle, $this->nlt(1) . "const PK = $pk; # chave primária");
         # atributos do modelo
         fwrite($handle, $this->nlt(1));
-        foreach ($schema as $f) {
+        foreach ($fields as $f) {
             fwrite($handle, $this->nlt(1) . 'public $' . $f->Field . ';');
         }
+        # métodos pertence a ...
+        foreach ($fks as $f) {
+            fwrite($handle, $this->nlt(1));
+            fwrite($handle, $this->nlt(1) . '/**');
+            fwrite($handle, $this->nlt(1) . '* ' . $model . ' pertence a ' . ucfirst($f->reftable));
+            fwrite($handle, $this->nlt(1) . '* @return ' . ucfirst($f->reftable) . ' $' . $f->reftable);
+            fwrite($handle, $this->nlt(1) . '*/');
+            fwrite($handle, $this->nlt(1) . 'function get' . ucfirst($f->reftable) . $f->used . '(){');
+            fwrite($handle, $this->nlt(2) . 'return $this->belongsTo(\'' . ucfirst($f->reftable) . '\',\'' . $f->fk . '\');');
+            fwrite($handle, $this->nlt(1) . "}");
+        }
+        # métodos possui ...
+        foreach ($dbSchema as $dbtables) {
+            foreach ($dbtables['fk'] as $fk) {
+                if ($fk->reftable == $table) {
+                    fwrite($handle, $this->nlt(1));
+                    fwrite($handle, $this->nlt(1) . '/**');
+                    fwrite($handle, $this->nlt(1) . '* ' . $model . ' possui ' . ucfirst($fk->table) . '(s)');
+                    fwrite($handle, $this->nlt(1) . '* @param Lazydev\Core\Criteria $criteria');
+                    fwrite($handle, $this->nlt(1) . '* @return ' . ucfirst($fk->table) . '[] array de ' . ucfirst($fk->table));
+                    fwrite($handle, $this->nlt(1) . '*/');
+                    fwrite($handle, $this->nlt(1) . 'function get' . ucfirst($fk->table) . 's'  . $fk->used . '($criteria = NULL){');
+                    fwrite($handle, $this->nlt(2) . 'return $this->hasMany(\'' . ucfirst($fk->table) . '\',\'' . $fk->fk . '\',$criteria);');
+                    fwrite($handle, $this->nlt(1) . "}");
+                }
+            }
+        }
+
+        # métodos NxN
+        foreach ($dbSchema as $dbtables) {
+            $ffk = '';
+            foreach ($dbtables['fk'] as $fk) {
+                if ($fk->reftable == $table) {
+                    $ffk = $fk->fk;
+                    continue;
+                }
+                if ($ffk) {
+                    fwrite($handle, $this->nlt(1));
+                    fwrite($handle, $this->nlt(1) . '/**');
+                    fwrite($handle, $this->nlt(1) . '* ' . $model . ' possui ' . ucfirst($fk->reftable) . '(s) via ' . ucfirst($fk->table) . '(NxN)');
+                    fwrite($handle, $this->nlt(1) . '* @param Lazydev\Core\Criteria $criteria');
+                    fwrite($handle, $this->nlt(1) . '* @return ' . ucfirst($fk->reftable) . '[] array de ' . ucfirst($fk->reftable));
+                    fwrite($handle, $this->nlt(1) . '*/');
+                    fwrite($handle, $this->nlt(1) . 'function get' . ucfirst($fk->reftable) . 's' . $fk->used . '($criteria = NULL){');
+                    fwrite($handle, $this->nlt(2) . 'return $this->hasNN(');
+                    fwrite($handle, '\'' . ucfirst($fk->table) . '\', \'' . $ffk . '\', \'' . ucfirst($fk->reftable) . '\', \'' . $fk->fk . '\', $criteria');
+                    fwrite($handle, ');');
+                    fwrite($handle, $this->nlt(1) . "}");
+                }
+            }
+            $ffk = '';
+            foreach (array_reverse($dbtables['fk']) as $fk) {
+                if ($fk->reftable == $table) {
+                    $ffk = $fk->fk;
+                    continue;
+                }
+                if ($ffk) {
+                    fwrite($handle, $this->nlt(1));
+                    fwrite($handle, $this->nlt(1) . '/**');
+                    fwrite($handle, $this->nlt(1) . '* ' . $model . ' possui ' . ucfirst($fk->reftable) . '(s) via ' . ucfirst($fk->table) . '(NxN)');
+                    fwrite($handle, $this->nlt(1) . '* @param Lazydev\Core\Criteria $criteria');
+                    fwrite($handle, $this->nlt(1) . '* @return ' . ucfirst($fk->reftable) . '[] array de ' . ucfirst($fk->reftable));
+                    fwrite($handle, $this->nlt(1) . '*/');
+                    fwrite($handle, $this->nlt(1) . 'function get' . ucfirst($fk->reftable) . 's' . $fk->used . '($criteria = NULL){');
+                    fwrite($handle, $this->nlt(2) . 'return $this->hasNN(');
+                    fwrite($handle, '\'' . ucfirst($fk->table) . '\', \'' . $ffk . '\', \'' . ucfirst($fk->reftable) . '\', \'' . $fk->fk . '\', $criteria');
+                    fwrite($handle, ');');
+                    fwrite($handle, $this->nlt(1) . "}");
+                }
+            }
+        }
+
 
         # fim da classe        
         fwrite($handle, $this->nlt(0) . "}");
@@ -131,18 +204,23 @@ class LazyInstall extends \Lazydev\Core\Controller
                     $f->InputType = 'time';
                 } elseif (strstr($f->Type, 'text')) {
                     $f->InputType = 'html';
-                }
-                else{
+                } else {
                     $f->InputType = 'text';
                     $f->selected = $selected;
                     $selected = '';
                 }
-
                 if ($f->Key == 'PRI') {
                     $pk[] = $f->Field;
                 }
                 $f->fk = 0;
+                array_map(function ($fk) {
+                    $fk->used = '';
+                }, (array)$fks);
+                $fkUsed = [];
                 foreach ($fks as $fk) {
+                    $fk->used = in_array($fk->reftable, $fkUsed) ? ++$fk->used : '';
+                    $fk->used = $fk->used == 1 ? 2 : $fk->used;
+                    $fkUsed[] = $fk->reftable;
                     if ($fk->fk == $f->Field) {
                         $f->fk = $fk->reftable;
                     }

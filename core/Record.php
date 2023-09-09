@@ -185,8 +185,7 @@ abstract class Record
      * que cria a relação
      * 
      * @param string $model
-     * @param String $FK
-     * @param Criteria $criteria
+     * @param string $FK
      * @return object $obj  instância da classe passada no parâmetro $model
      */
     protected function belongsTo($model, $FK)
