@@ -41,12 +41,13 @@ class LazyInstall extends \Lazydev\Core\Controller
             $this->cretateModel($table, $dbSchema);
         }
         if (filter_input(INPUT_POST, 'createcontroller')) {
-            echo ('cria controller');
+            $this->cretateController($table, $dbSchema);
         }
+        $this->createView($table, $dbSchema);
         exit;
     }
 
-    private function cretateModel(string $table, $dbSchema)
+    private function cretateModel(string $table, array $dbSchema)
     {
         $tableSchema = $dbSchema[$table];
         $pks = $tableSchema['pk'];
@@ -147,6 +148,138 @@ class LazyInstall extends \Lazydev\Core\Controller
         # fim da classe        
         fwrite($handle, $this->nlt(0) . "}");
         fclose($handle);
+    }
+
+    private function cretateController(string $table, array $dbSchema)
+    {
+        $tableSchema = $dbSchema[$table];
+        $pks = $tableSchema['pk'];
+        $fks = $tableSchema['fk'];
+        $fields = $tableSchema['fields'];
+        $model = ucfirst($tableSchema['name']);
+        $significativo = filter_input(INPUT_POST, 'campoSignificativo');
+        $handle = fopen("../controller/$model.php", 'w');
+        if (!$handle) {
+            new Msg("Não foi possível criar o model $model. Verifique as permissões do diretório", 3);
+            return;
+        }
+        # namespace e classe
+        fwrite($handle, "<?php");
+        fwrite($handle, "{$this->nlt(0)}namespace Lazydev\Controller;\n");
+        fwrite($handle, "{$this->nlt(0)}use Lazydev\Core\Criteria;");
+        fwrite($handle, "{$this->nlt(0)}use Lazydev\Model\\$model as Model$model;\n");
+        fwrite($handle, "{$this->nlt(0)}final class $model extends \Lazydev\Core\Controller{ \n");
+
+        # método lista
+        if (filter_input(INPUT_POST, 'createlista')) {
+            fwrite($handle, $this->nlt(1) . "# Lista de $model");
+            fwrite($handle, $this->nlt(1) . "# renderiza a visão /view/$model/lista.tpl");
+            fwrite($handle, $this->nlt(1) . "# url: /$model/lista");
+            fwrite($handle, $this->nlt(1) . 'function lista(){');
+            fwrite($handle, $this->nlt(2) . '$this->setTitle(\'Lista\');');
+            fwrite($handle, $this->nlt(2) . '$c = new Criteria();');
+            fwrite($handle, $this->nlt(2) . '$c->setOrder(\''.$significativo.'\');');
+            fwrite($handle, $this->nlt(2) . "\$".$table."s=Model$model::getList(\$c);");
+            fwrite($handle, $this->nlt(2) . '$this->set(\'' . $table . 's\', $' . $table . 's);');
+            fwrite($handle, $this->nlt(1) . "}\n");
+        }
+
+        # método ver
+        if (filter_input(INPUT_POST, 'createver')) {
+            fwrite($handle, $this->nlt(1) . "# Visualiza um(a) $model");
+            fwrite($handle, $this->nlt(1) . "# renderiza a visão /view/$model/ver.tpl");
+            fwrite($handle, $this->nlt(1) . "# url: /$model/ver/2");
+            fwrite($handle, $this->nlt(1) . 'function ver(){');
+            fwrite($handle, $this->nlt(2) . '$this->setTitle(\'Ver\');');
+            fwrite($handle, $this->nlt(1) . "}\n");
+        }
+
+        # método cadastrar
+        if (filter_input(INPUT_POST, 'createcadastrar')) {
+            fwrite($handle, $this->nlt(1) . "# Cadastrar $model");
+            fwrite($handle, $this->nlt(1) . "# renderiza a visão /view/$model/cadastrar.tpl");
+            fwrite($handle, $this->nlt(1) . "# url: /$model/cadastrar");
+            fwrite($handle, $this->nlt(1) . 'function cadastrar(){');
+            fwrite($handle, $this->nlt(2) . '$this->setTitle(\'Cadastrar\');');
+            fwrite($handle, $this->nlt(1) . "}\n");
+        }
+
+        # método post_cadastrar
+        if (filter_input(INPUT_POST, 'createcadastrar')) {
+            fwrite($handle, $this->nlt(1) . "# Recebe os dados do formulário de cadastrar $model e redireciona para a lista");
+            fwrite($handle, $this->nlt(1) . 'function post_cadastrar(){');
+            fwrite($handle, $this->nlt(2) . '$this->go(\'' . $model . '/lista\');');
+            fwrite($handle, $this->nlt(1) . "}\n");
+        }
+
+        # método editar
+        if (filter_input(INPUT_POST, 'createeditar')) {
+            fwrite($handle, $this->nlt(1) . "# Editar $model");
+            fwrite($handle, $this->nlt(1) . "# renderiza a visão /view/$model/editar.tpl");
+            fwrite($handle, $this->nlt(1) . "# url: /$model/editar");
+            fwrite($handle, $this->nlt(1) . 'function editar(){');
+            fwrite($handle, $this->nlt(2) . '$this->setTitle(\'Editar\');');
+            fwrite($handle, $this->nlt(1) . "}\n");
+        }
+
+        # método post_editar
+        if (filter_input(INPUT_POST, 'createeditar')) {
+            fwrite($handle, $this->nlt(1) . "# Recebe os dados do formulário de editar $model e redireciona para a lista");
+            fwrite($handle, $this->nlt(1) . 'function post_editar(){');
+            fwrite($handle, $this->nlt(2) . '$this->go(\'' . $model . '/lista\');');
+            fwrite($handle, $this->nlt(1) . "}\n");
+        }
+
+        # método excluir
+        if (filter_input(INPUT_POST, 'createexcluir')) {
+            fwrite($handle, $this->nlt(1) . "# Confirma a exclusão ou não de um(a) $model");
+            fwrite($handle, $this->nlt(1) . "# renderiza a visão /view/$model/excluir.tpl");
+            fwrite($handle, $this->nlt(1) . "# url: /$model/excluir");
+            fwrite($handle, $this->nlt(1) . 'function excluir(){');
+            fwrite($handle, $this->nlt(2) . '$this->setTitle(\'Excluir\');');
+            fwrite($handle, $this->nlt(1) . "}\n");
+        }
+
+        # método post_excluir
+        if (filter_input(INPUT_POST, 'createexcluir')) {
+            fwrite($handle, $this->nlt(1) . "# Recebe o id via post e exclui $model");
+            fwrite($handle, $this->nlt(1) . 'function post_excluir(){');
+            fwrite($handle, $this->nlt(2) . '$this->go(\'' . $model . '/lista\');');
+            fwrite($handle, $this->nlt(1) . "}\n");
+        }
+
+
+        fwrite($handle, $this->nlt(1) . "}");
+    }
+
+    private function createView(string $table, array $dbSchema){
+        if (filter_input(INPUT_POST, 'createlista')) {
+            $this->createViewLista($table, $dbSchema);
+        }
+    }
+
+    private function createViewLista(string $table, array $dbSchema){
+        $tableSchema = $dbSchema[$table];
+        $pks = $tableSchema['pk'];
+        $fks = $tableSchema['fk'];
+        $fields = $tableSchema['fields'];
+        $model = ucfirst($tableSchema['name']);
+        $significativo = filter_input(INPUT_POST, 'campoSignificativo');
+        
+        if (!is_dir('../view/' . $model)) {
+            mkdir('../view/' . $model);
+        }
+        $handle = fopen("../view/$model/lista.tpl", 'w');
+        if (!$handle) {
+            new Msg("Não foi possível criar view/$model/lista.tpl. Verifique as permissões do diretório", 3);
+            return;
+        }
+        fwrite($handle, "<h1>Lista de $model</h1>");
+        fwrite($handle, $this->nlt(0) . "{foreach $".$table."s as $".substr($table,0,1)."}");
+        fwrite($handle, $this->nlt(1) . '<p>{$'.substr($table,0,1).'->'.$significativo.'}</p>');
+        fwrite($handle, $this->nlt(0) . "{foreachelse}");
+        fwrite($handle, $this->nlt(1) . "<p>Nada para exibir aqui.</p>");
+        fwrite($handle, $this->nlt(0) . "{/foreach}");
     }
 
 

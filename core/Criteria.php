@@ -40,7 +40,7 @@ class Criteria {
             }
             # orderby
             elseif(isset($param['orderby'])){
-                $this->setOrder($param['limit']);
+                $this->setOrder($param['order']);
             }
             #paginate
             elseif(isset($param['paginate']) && is_int($param['paginate'])){

@@ -32,8 +32,8 @@
             <label for="createeditar">/View/{$tableSchema['name']|capitalize}/editar.tpl</label>
         </div>
         <div style="margin: 15px;">
-            <input type="checkbox" name="createapagar" id="createapagar" checked>
-            <label for="createapagar">/View/{$tableSchema['name']|capitalize}/apagar.tpl</label>
+            <input type="checkbox" name="createapagar" id="createexcluir" checked>
+            <label for="createapagar">/View/{$tableSchema['name']|capitalize}/excluir.tpl</label>
         </div>
     </div>
 

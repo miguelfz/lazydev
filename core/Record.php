@@ -224,7 +224,7 @@ abstract class Record
      * @return boolean
      * @throws Exception
      */
-    public function save($data = NULL)
+    public function save(?array $data)
     {
         $this->sanitize();
         $db = new MariaDB();
@@ -336,10 +336,10 @@ abstract class Record
      * 
      * $models = Model::getList(); 
      * 
-     * @param Criteria $criteria
+     * @param ?Criteria $criteria
      * @return array de Objetos do modelo
      */
-    public static function getList(Criteria $criteria = NULL)
+    public static function getList(?Criteria $criteria = null)
     {
         if (!empty($criteria)) {
             $criteria = clone $criteria;
@@ -414,7 +414,7 @@ abstract class Record
      * @param Criteria $criteria
      * @return object 
      */
-    public static function getFirst(Criteria $criteria = NULL)
+    public static function getFirst(?Criteria $criteria)
     {
         $db = new MariaDB();
         $class = get_called_class();
