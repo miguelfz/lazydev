@@ -14,6 +14,7 @@ final class Livro extends \Lazydev\Core\Record{
     public $paginas;
     public $codCategoria;
     public $codEditora;
+    public $lido;
     
     /**
     * Livro pertence a Categoria
@@ -37,7 +38,7 @@ final class Livro extends \Lazydev\Core\Record{
     * @return Livroautor[] array de Livroautor
     */
     function getLivroautors($criteria = NULL){
-        return $this->hasMany('Livroautor','codLivro',$criteria);
+        return $this->hasMany('Livroautor','codLivro', $criteria);
     }
     
     /**

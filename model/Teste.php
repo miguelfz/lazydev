@@ -15,7 +15,7 @@ final class Teste extends \Lazydev\Core\Record{
     * @return Livroautor $livroautor
     */
     function getLivroautor(){
-        return $this->belongsTo('Livroautor','codlivro');
+        return $this->belongsTo('Livroautor',['codlivro', 'codAutor']);
     }
     
     /**
@@ -23,6 +23,6 @@ final class Teste extends \Lazydev\Core\Record{
     * @return Livroautor $livroautor
     */
     function getLivroautor2(){
-        return $this->belongsTo('Livroautor','codAutor');
+        return $this->belongsTo('Livroautor',['codAutor', 'codlivro']);
     }
 }

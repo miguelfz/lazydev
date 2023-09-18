@@ -27,17 +27,19 @@ final class Livroautor extends \Lazydev\Core\Record{
     
     /**
     * Livroautor possui Teste(s)
+    * @param Lazydev\Core\Criteria $criteria
     * @return Teste[] array de Teste
     */
-    function getTeste($criteria = NULL){
-        return $this->hasMany('Teste','codlivro',$criteria);
+    function getTestes($criteria = NULL){
+        return $this->hasMany('Teste',['codlivro', 'codAutor'], $criteria);
     }
     
     /**
     * Livroautor possui Teste(s)
+    * @param Lazydev\Core\Criteria $criteria
     * @return Teste[] array de Teste
     */
-    function getTeste2($criteria = NULL){
-        return $this->hasMany('Teste','codAutor',$criteria);
+    function getTestes2($criteria = NULL){
+        return $this->hasMany('Teste',['codAutor', 'codlivro'], $criteria);
     }
 }

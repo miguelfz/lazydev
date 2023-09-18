@@ -12,14 +12,16 @@ final class Autor extends \Lazydev\Core\Record{
     
     /**
     * Autor possui Livroautor(s)
+    * @param Lazydev\Core\Criteria $criteria
     * @return Livroautor[] array de Livroautor
     */
     function getLivroautors($criteria = NULL){
-        return $this->hasMany('Livroautor','codAutor',$criteria);
+        return $this->hasMany('Livroautor','codAutor', $criteria);
     }
     
     /**
     * Autor possui Livro(s) via Livroautor(NxN)
+    * @param Lazydev\Core\Criteria $criteria
     * @return Livro[] array de Livro
     */
     function getLivros($criteria = NULL){

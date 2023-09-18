@@ -11,9 +11,19 @@ final class Editora extends \Lazydev\Core\Record{
     
     /**
     * Editora possui Livro(s)
+    * @param Lazydev\Core\Criteria $criteria
     * @return Livro[] array de Livro
     */
     function getLivros($criteria = NULL){
-        return $this->hasMany('Livro','codEditora',$criteria);
+        return $this->hasMany('Livro','codEditora', $criteria);
+    }
+    
+    /**
+    * Editora possui Categoria(s) via Livro(NxN)
+    * @param Lazydev\Core\Criteria $criteria
+    * @return Categoria[] array de Categoria
+    */
+    function getCategorias($criteria = NULL){
+        return $this->hasNN('Livro', 'codEditora', 'Categoria', 'codCategoria', $criteria);
     }
 }

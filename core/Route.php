@@ -16,7 +16,7 @@ class Route {
      * @param string $controller Controler responsavel pela rora
      * @param string $action Método do controler responsável pela view e model
      */
-    public static function set(string $rota, string $controller, string $action = 'index') {
+    public static function set(string $rota, string $controller, string $action = 'inicio') {
         self::$route[strtolower($rota)] = [$controller, $action];
     }
 

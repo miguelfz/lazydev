@@ -6,7 +6,7 @@ abstract class Record
 {
 
     const TABLE = '';
-    const PK = '';
+    const PK = [];
     private $vars = [];
 
     /**
@@ -21,11 +21,11 @@ abstract class Record
      * 
      * @param mixed $pk
      */
-    public function __construct($pk = NULL)
+    public function __construct(...$pk)
     {
-        if (!is_null($pk)) {
+        if (!is_null($pk) && !empty($pk)) {
             if (!$this->load($pk)) {
-                throw new \Exception('Não foi possível localizar na tabela <strong>' . $this::TABLE . '</strong> o identificador ' . $pk);
+                throw new \Exception('Não foi possível localizar este registro ');
             }
         }
     }
@@ -45,6 +45,7 @@ abstract class Record
         if (array_key_exists($varname, $this->vars)) {
             return $this->vars[$varname];
         }
+        return null;
     }
 
     public function sanitize()
@@ -77,12 +78,12 @@ abstract class Record
      * Informe o nome do Modelo que possui muitos e o nome do campo chave estrangeira 
      * que cria a relação
      * 
-     * @param String $model
-     * @param String $FK
+     * @param String $model nome da classe Modelo
+     * @param mixed $FK chave estrangeira
      * @param Criteria $criteria
-     * @return object $obj instância da classe passada no parâmetro $model
+     * @return object[] $obj instância da classe passada no parâmetro $model
      */
-    protected function hasMany(string $model, string $FK, Criteria $criteria = NULL)
+    protected function hasMany(string $model, mixed $FK, Criteria $criteria = NULL)
     {
         $model = '\Lazydev\Model\\' . $model;
         $att = $model . 's' . $criteria;
@@ -90,10 +91,14 @@ abstract class Record
             if (is_null($criteria)) {
                 $criteria = new Criteria();
             }
-            if (empty($this->{$this::PK})) {
-                $criteria->addCondition($FK, 'IS', NULL);
-            } else {
-                $criteria->addCondition($FK, '=', $this->{$this::PK});
+            $pks = (array)$this::PK;
+            foreach ((array)$FK as $f) {
+                $pk = array_shift($pks);
+                if (empty($this->$pk)) {
+                    $criteria->addCondition($f, 'IS', NULL);
+                } else {
+                    $criteria->addCondition($f, '=', $this->{$pk});
+                }
             }
             $this->$att = $model::getList($criteria);
         }
@@ -110,7 +115,7 @@ abstract class Record
      * @param Criteria $criteria
      * @return array $objs coleção de instância da classe passada por parâmetroModel $destinationModel
      */
-    protected function hasNN($MiddleModel, $sourceFK, $destinationFK, $destinationModel, $criteria = NULL)
+    protected function hasNN($MiddleModel, $sourceFK,  $destinationModel, $destinationFK, $criteria = NULL)
     {
         $att = $MiddleModel . $destinationModel . 's' . $criteria;
         if (isset($this->$att) && count($this->$att)) {
@@ -119,7 +124,9 @@ abstract class Record
         $db = new MariaDB();
         $class = get_called_class();
         $sourceTable = $class::TABLE;
+        $MiddleModel = '\Lazydev\Model\\' . $MiddleModel;
         $middleTable = $MiddleModel::TABLE;
+        $destinationModel = '\Lazydev\Model\\' . $destinationModel;
         $destinationTable = $destinationModel::TABLE;
 
         $q = "SELECT t3.* FROM $sourceTable t1,$middleTable t2,$destinationTable t3";
@@ -185,18 +192,21 @@ abstract class Record
      * que cria a relação
      * 
      * @param string $model
-     * @param string $FK
+     * @param mixed $FK
      * @return object $obj  instância da classe passada no parâmetro $model
      */
     protected function belongsTo($model, $FK)
     {
         $model = '\Lazydev\Model\\' . $model;
-        $model = '' . ucfirst($model);
-        $att = $model . $FK;
-        if (empty($this->$att)) {
-            $this->$att = new $model($this->$FK);
+        $atts = [];
+        foreach ((array)$FK as $f) {
+            $atts[]  = $this->$f;
         }
-        return $this->$att;
+        $param = $model . implode('_', $atts);
+        if (!$this->$param) {
+            $this->$param = new $model(...$atts);
+        }
+        return $this->$param;
     }
 
     /**
@@ -363,8 +373,8 @@ abstract class Record
         }
         $criteria->setTable($table);
         $vars = '*';
-        if($criteria->getVars()){            
-         $vars = implode(', '.$table.'.',$criteria->getVars());
+        if ($criteria->getVars()) {
+            $vars = implode(', ' . $table . '.', $criteria->getVars());
         }
         $q = "SELECT $table.$vars FROM " . implode(',', $criteria->getTables());
         if ($criteria->getConditions()) {
@@ -566,7 +576,7 @@ abstract class Record
             $r = '';
             $r .= '<div class="pagination">';
             $pageURL = preg_replace('#(' . preg_quote($pageParam) . ')(:\d+)(' . preg_quote('/') . ')#si', '', $pageURL);
-            $pageURL = str_replace('//', '/', $pageURL.'/');
+            $pageURL = str_replace('//', '/', $pageURL . '/');
             if (URLF && !filter_input(INPUT_GET, '_url', FILTER_SANITIZE_URL)) {
                 $pageURL .= CONTROLLER . '/' . ACTION . '/';
             } else if (!URLF && !filter_input(INPUT_GET, '_url', FILTER_SANITIZE_URL)) {
@@ -575,7 +585,7 @@ abstract class Record
 
             $urls = explode('?', $pageURL);
             $pageURL = $urls[0];
-            $NRparamns = isset($urls[1]) ? '?' . substr($urls[1],0,-1) : '';
+            $NRparamns = isset($urls[1]) ? '?' . substr($urls[1], 0, -1) : '';
             if (substr($pageURL, -1, 1) != '/') {
                 $pageURL .= '/';
             }
@@ -583,22 +593,22 @@ abstract class Record
             $start = $criteria->curpage - $maxPages < 1 ? 1 : $criteria->curpage - $maxPages;
             $end = ($criteria->curpage + $maxPages > $pages ? $pages : $criteria->curpage + ((($maxPages - $criteria->curpage) > 0 ? ($maxPages - $criteria->curpage) : 0) + $maxPages));
             if ($criteria->curpage - 1 > $maxPages) {
-                $r .= '<a href="' . $http . $pageURL . $pageParam . ':1'. '/' . $NRparamns.'#' . $pageParam . '">1</a>';
-                if($criteria->curpage -2  > $maxPages){
+                $r .= '<a href="' . $http . $pageURL . $pageParam . ':1' . '/' . $NRparamns . '#' . $pageParam . '">1</a>';
+                if ($criteria->curpage - 2  > $maxPages) {
                     $r .= ' ... ';
                 }
             }
             for ($i = $start; $i <= $end; $i++) {
                 $r .= '<a class="' . (($criteria->curpage == $i) ? "active" : "") . '" '
-                    . 'href="' . $http . $pageURL . $pageParam . ':' . $i  . '/' . $NRparamns. '#' . $pageParam . '">';
+                    . 'href="' . $http . $pageURL . $pageParam . ':' . $i  . '/' . $NRparamns . '#' . $pageParam . '">';
                 $r .= $i;
                 $r .= '</a>';
             }
-            if ($end< $pages) {
-                if(($end+1)<$pages){
+            if ($end < $pages) {
+                if (($end + 1) < $pages) {
                     $r .= ' ... ';
                 }
-                $r .= '<a href="' . $http . $pageURL . $pageParam . ':' . $pages .'/' . $NRparamns. '#' . $pageParam . '">' . $pages . '</a>';
+                $r .= '<a href="' . $http . $pageURL . $pageParam . ':' . $pages . '/' . $NRparamns . '#' . $pageParam . '">' . $pages . '</a>';
             }
             $r .= "</div>";
             return $r;

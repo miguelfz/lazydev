@@ -2,7 +2,10 @@
 namespace Lazydev\Controller;
 
 use Lazydev\Core\Criteria;
+use Lazydev\Core\Msg;
 use Lazydev\Model\Livro as ModelLivro;
+use Lazydev\Model\Categoria as ModelCategoria;
+use Lazydev\Model\Editora as ModelEditora;
 
 final class Livro extends \Lazydev\Core\Controller{ 
 
@@ -21,14 +24,30 @@ final class Livro extends \Lazydev\Core\Controller{
     # renderiza a visão /view/Livro/ver.tpl
     # url: /Livro/ver/2
     function ver(){
-        $this->setTitle('Ver');
+        try {
+            $livro = new ModelLivro($this->getParam(0));
+            $this->set('livro', $livro);
+            $this->set('livroautors', $livro->getLivroautors());
+            $this->set('autors', $livro->getAutors());
+            $this->setTitle($livro->titulo);
+        } catch (\Exception $e) {
+            new Msg($e->getMessage(), 2);
+            if ($this->getParam('url')) {
+                $this->goUrl($this->getParam('url'));
+            }
+            $this->go('livro', 'lista');
+        }
     }
 
     # Cadastrar Livro
     # renderiza a visão /view/Livro/cadastrar.tpl
     # url: /Livro/cadastrar
     function cadastrar(){
-        $this->setTitle('Cadastrar');
+        $this->setTitle('Cadastrar Livro');
+        $livro = new ModelLivro;
+        $this->set('livro', $livro);
+        $this->set('categorias',  array_column((array)ModelCategoria::getList(), 'nome', 'cod'));
+        $this->set('editoras',  array_column((array)ModelEditora::getList(), 'nome', 'cod'));
     }
 
     # Recebe os dados do formulário de cadastrar Livro e redireciona para a lista

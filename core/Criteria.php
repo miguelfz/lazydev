@@ -1,12 +1,15 @@
 <?php
+
 namespace Lazydev\Core;
+
 /**
  * classe Criteria
  * 
  * @author Miguel
  * @package \lib\core
  */
-class Criteria {
+class Criteria
+{
 
     private static $idIndex = 0;
     public $locked = false;
@@ -23,52 +26,56 @@ class Criteria {
     private $sql;
     private $vars;
 
-    function __toString() {
+    function __toString()
+    {
         return '_criteria_' . $this->id;
     }
 
-    function __construct(...$params) {
+    function __construct(...$params)
+    {
         $this->id = ++self::$idIndex;
-        foreach($params as $param){
+        foreach ($params as $param) {
             #limit
-            if(isset($param['limit'])){
+            if (isset($param['limit'])) {
                 $this->setLimit((int)$params['limit']);
             }
             # campos envolvidos
-            elseif(isset($param['vars']) && is_array($param['vars'])){
+            elseif (isset($param['vars']) && is_array($param['vars'])) {
                 $this->vars = ($param['vars']);
             }
             # orderby
-            elseif(isset($param['orderby'])){
+            elseif (isset($param['orderby'])) {
                 $this->setOrder($param['order']);
             }
             #paginate
-            elseif(isset($param['paginate']) && is_int($param['paginate'])){
+            elseif (isset($param['paginate']) && is_int($param['paginate'])) {
                 $this->paginate($params['paginate']);
-            }
-            elseif(isset($param['paginate']) && is_array($param['paginate'])){
+            } elseif (isset($param['paginate']) && is_array($param['paginate'])) {
                 $this->paginate(...$param['paginate']);
             }
         }
-        
     }
 
-    function setTable(string $table) {
+    function setTable(string $table)
+    {
         $this->table = $table;
         $this->addTable($table);
     }
 
-    private function addTable($table) {
+    private function addTable($table)
+    {
         if (!in_array($table, $this->tables)) {
             $this->tables[] = $table;
         }
     }
 
-    public function getTables() {
+    public function getTables()
+    {
         return $this->tables;
     }
-    
-    public function getVars() {
+
+    public function getVars()
+    {
         return $this->vars;
     }
 
@@ -85,17 +92,31 @@ class Criteria {
      * o exemplo acima resultará na consulta SQL:<br>
      * SELECT * FROM model WHERE foo = 'teste' AND bar > 5;
      * 
-     * @param String $field
-     * @param String $op
-     * @param String $value
+     * @param mixed $field String ou Array
+     * @param String $op operador = >=  <= IS NOT
+     * @param mixed $value String ou Array
      */
-    public function addCondition(string $field, string $operator, ?string $value) {
-        if (strstr($field, '.')) {
-            $r = explode('.', $field);
-            $table = $r[0];
-            $this->addTable($table);
+    public function addCondition($field, string $operator, $value)
+    {
+        if (is_array($field)) {
+            foreach ($field as $v) {
+                $fvalue = array_shift($value);
+                if (strstr($v, '.')) {
+                    $r = explode('.', $v);
+                    $table = $r[0];
+                    $this->addTable($table);
+                }
+                $this->conditions[] = array($v, $operator, $fvalue, str_replace('.', '', $v) . uniqid());
+            }
+        } else {
+            if (strstr($field, '.')) {
+                $r = explode('.', $field);
+                $table = $r[0];
+                $this->addTable($table);
+            }
+            $fvalue = is_array($value)?array_shift($value):$value;
+            $this->conditions[] = array($field, $operator, $fvalue, str_replace('.', '', $field) . uniqid());
         }
-        $this->conditions[] = array($field, $operator, $value, str_replace('.', '', $field) . uniqid());
     }
 
     /**
@@ -113,7 +134,8 @@ class Criteria {
      * o exemplo acima resultará na consulta SQL:<br>
      * SELECT * FROM model WHERE (foo = 'teste' AND bar > 5) OR (y > 0);         * 
      */
-    public function addOr() {
+    public function addOr()
+    {
         $this->conditions[] = ') OR (';
     }
 
@@ -122,7 +144,8 @@ class Criteria {
      * 
      * @param int $number
      */
-    public function setLimit($number) {
+    public function setLimit($number)
+    {
         $this->limit = $number;
     }
 
@@ -140,11 +163,13 @@ class Criteria {
      * 
      * @param String $field
      */
-    public function setOrder($field) {
+    public function setOrder($field)
+    {
         $this->order = $field;
     }
 
-    public function paginate($perPage, $paramName = 'pagina') {
+    public function paginate($perPage, $paramName = 'pagina')
+    {
         if (!$perPage) {
             $this->paginate = false;
             return;
@@ -156,11 +181,13 @@ class Criteria {
         $this->setLimit(($this->curpage - 1) * $this->perPage . ',' . $this->perPage);
     }
 
-    public function getPerPage() {
+    public function getPerPage()
+    {
         return $this->perPage;
     }
 
-    public function getPageParamName() {
+    public function getPageParamName()
+    {
         return $this->pageParamName;
     }
 
@@ -168,23 +195,25 @@ class Criteria {
      * Unifica duas instancias de Criteria
      * @param Criteria $criteria
      */
-    public function merge(Criteria $criteria) {
+    public function merge(Criteria $criteria)
+    {
         $this->conditions = array_merge($criteria->conditions, $this->conditions);
-        if(empty($this->perPage) && empty($this->limit)){
+        if (empty($this->perPage) && empty($this->limit)) {
             $this->perPage = $criteria->getPerPage();
             $this->pageParamName = $criteria->getPageParamName();
             $this->paginate = $criteria->paginate;
             $this->curpage = $criteria->curpage;
         }
-        if (empty($this->limit)){
+        if (empty($this->limit)) {
             $this->limit = $criteria->limit;
         }
-        if (empty($this->order)){
+        if (empty($this->order)) {
             $this->order = $criteria->order;
         }
     }
 
-    public function getConditions() {
+    public function getConditions()
+    {
         if (!empty($this->table)) {
             foreach ($this->conditions as &$c) {
                 if (is_array($c)) {
@@ -203,11 +232,13 @@ class Criteria {
         return $this->conditions;
     }
 
-    public function getLimit() {
+    public function getLimit()
+    {
         return $this->limit;
     }
 
-    public function getOrder() {
+    public function getOrder()
+    {
         if (!empty($this->table) && !empty($this->order)) {
             if (!strstr($this->order, '.') && $this->order != 'RAND()') {
                 $orders = explode(',', $this->order);
@@ -236,12 +267,13 @@ class Criteria {
      * @param String $op
      * @param String $value
      */
-    public function addSqlCondition($sqlString) {
+    public function addSqlCondition($sqlString)
+    {
         $this->sql .= ' ' . $sqlString;
     }
 
-    public function getSqlConditions() {
+    public function getSqlConditions()
+    {
         return $this->sql;
     }
-
 }

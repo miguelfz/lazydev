@@ -13,7 +13,8 @@
         </div>
         <div style="margin: 15px;">
             <input type="checkbox" name="createcontroller" id="createcontroller" checked>
-            <label for="createcontroller" style="font-weight: bold;">/Controller/{$tableSchema['name']|capitalize}.php</label>
+            <label for="createcontroller"
+                style="font-weight: bold;">/Controller/{$tableSchema['name']|capitalize}.php</label>
         </div>
         <div style="margin: 15px;">
             <input type="checkbox" name="createlista" id="createlista" checked>
@@ -33,7 +34,7 @@
         </div>
         <div style="margin: 15px;">
             <input type="checkbox" name="createapagar" id="createexcluir" checked>
-            <label for="createapagar">/View/{$tableSchema['name']|capitalize}/excluir.tpl</label>
+            <label for="createexcluir">/View/{$tableSchema['name']|capitalize}/excluir.tpl</label>
         </div>
     </div>
 
@@ -63,6 +64,11 @@
                                 <option value="selectFK">Select option</option>
                                 <option value="radioFK">Input radio</option>
                             </select>
+                            <select name="finalidadeSignificativo_{$m->Field}" id="finalidade_{$m->Field}">
+                            {foreach $dbSchema[$m->fk]['fields'] as $sfk}
+                                <option value="{$sfk->Field}" {if $sfk->selected neq ''}selected{/if}>exibir {$m->fk}.{$sfk->Field}</option>
+                            {/foreach}
+                            </select>
                         </td>
                     {else}
                         <td width="20%">
@@ -76,19 +82,14 @@
                         <td>
                             <select name="finalidade_{$m->Field}" id="finalidade_{$m->Field}">
                                 <option value="text">linha de texto geral</option>
-                                <option value="html" {if $m->InputType eq 'html'}selected{/if}>texto longo com HTML</option>
+                                <option value="html" {if $m->InputType eq 'textarea'}selected{/if}>texto longo</option>
                                 <option value="number" {if $m->InputType eq 'number'}selected{/if}>número</option>
-                                <option value="now" {if $m->InputType eq 'now'}selected{/if}>agora (data e hora atual)
-                                </option>
+                                <option value="now" {if $m->InputType eq 'now'}selected{/if}>agora (data e hora atual)</option>
                                 <option value="date" {if $m->InputType eq 'date'}selected{/if}>data</option>
                                 <option value="datetime" {if $m->InputType eq 'datetime'}selected{/if}>data e hora</option>
-                                <option value="time" {if $m->InputType eq 'time'}selected{/if}>hora minuto e segundo
-                                </option>
+                                <option value="time" {if $m->InputType eq 'time'}selected{/if}>hora minuto e segundo</option>
                                 <option value="password">senha</option>
-                                <option value="checkbox" {if $m->InputType eq 'checkbox'}selected{/if}>Checkbox (boolean)
-                                </option>
-                                <option value="image">imagem com upload (não blob)</option>
-                                <option value="file">arquivo com upload (não blob)</option>
+                                <option value="checkbox" {if $m->InputType eq 'checkbox'}selected{/if}>Checkbox (boolean)</option>
                             </select>
                         </td>
                     {/if}
@@ -133,7 +134,8 @@
                         {if $m->fk neq '0'}
                             <select name="verRef_{$tableSchema['name']}_{$m->Field}" id="">
                                 {foreach $dbSchema[$m->fk]['fields'] as $keyfk=> $fk}
-                                    <option value="{$fk->Field}" {if $fk->selected neq ''}selected{/if}>{$m->fk}.{$fk->Field}</option>
+                                    <option value="{$fk->Field}" {if $fk->selected neq ''}selected{/if}>{$m->fk}.{$fk->Field}
+                                    </option>
                                 {/foreach}
                             </select>
                         {else}
@@ -142,7 +144,7 @@
                     </td>
                 </tr>
             {/foreach}
-            {* incluir coleções *}
+            {* incluir coleções Nx1*}
             {foreach $dbSchema as $key => $m}
                 {foreach $m['fk'] as $fk}
                     {if $fk->reftable eq $tableSchema['name']}
@@ -151,7 +153,7 @@
                                 <input type="checkbox" name="verLista_{$key}_{$fk->fk}" id="verLista_{$key}_{$fk->fk}" checked>
                             </td>
                             <td>
-                                <label for="ver_{$key}_{$fk->fk}">
+                                <label for="verLista_{$key}_{$fk->fk}">
                                     Lista de {$fk->table}(s)</label>
                             </td>
                             <td>
@@ -160,6 +162,56 @@
                     {/if}
                 {/foreach}
             {/foreach}
+            {* incluir coleções NxN*}
+            {foreach $dbSchema as $dbtables}
+                {$ffk = ''}
+                {foreach $dbtables['fk'] as $fk}
+                    {if $fk->reftable eq $tableSchema['name']}
+                        {$ffk = $fk->fk}
+                        {continue}
+                    {/if}
+                    {if $ffk}
+                        <tr>
+                            <td style="text-align: center;">
+                                <input type="checkbox" name="verListaNN_{$fk->reftable}s{$fk->used}"
+                                    id="verListaNN_{$fk->reftable}s{$fk->used}" checked>
+                            </td>
+                            <td>
+                                <label for="verListaNN_{$fk->reftable}s{$fk->used}">
+                                    Lista de {$fk->reftable}(s)<br>
+                                    <small>(NxN) via {$fk->table}.{$fk->fk}</small>
+                                </label>
+                            </td>
+                            <td>
+                            </td>
+                        </tr>
+                    {/if}
+                {/foreach}
+                {$ffk = ''}
+                {foreach $dbtables['fk']|@array_reverse:true as $fk}
+                    {if $fk->reftable eq $tableSchema['name']}
+                        {$ffk = $fk->fk}
+                        {continue}
+                    {/if}
+                    {if $ffk}
+                        <tr>
+                            <td style="text-align: center;">
+                                <input type="checkbox" name="verListaNN_{$fk->reftable}s{$fk->used}"
+                                    id="verListaNN_{$fk->reftable}s{$fk->used}" checked>
+                            </td>
+                            <td>
+                                <label for="verListaNN_{$fk->reftable}s{$fk->used}">
+                                    Lista de {$fk->reftable}(s)<br>
+                                    <small>(NxN) via {$fk->table}.{$fk->fk}</small>
+                                </label>
+                            </td>
+                            <td>
+                            </td>
+                        </tr>
+                    {/if}
+                {/foreach}
+            {/foreach}
+
         </table>
     </div>
 

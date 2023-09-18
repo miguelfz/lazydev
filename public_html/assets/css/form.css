@@ -13,3 +13,7 @@ input[type=submit], button{
     color:var(--secundary-color);
     border: 1px solid var(--black);
 }
+
+textarea{
+    min-height: 100px;
+}

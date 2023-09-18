@@ -169,7 +169,7 @@ final class MariaDB
     }
     private function pdo_sql_debug($sql) {
         foreach ($this->placeholders as $k => $v) {
-            $sql = str_replace($k, $v, $sql);
+            $sql = str_replace($k, strval($v), $sql);
         }
         return $sql;
     }

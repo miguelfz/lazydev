@@ -16,6 +16,8 @@ class LazyInstall extends \Lazydev\Core\Controller
 
     public function inicio()
     {
+        #echo '<pre>';
+        #print_r($this->getDbSchema());
         $this->setTitle('Iniciar Instalação');
         if (!\Lazydev\Core\Config::get('db_name')) {
             new Msg('Banco de dados não especificado no arquivo de configuração', 3);
@@ -28,8 +30,13 @@ class LazyInstall extends \Lazydev\Core\Controller
     {
         $this->setTitle('Criar modelo');
         $dbSchema = $this->getDbSchema();
+        $table = $this->getParam(0);
+        if (!count($dbSchema[$table]['pk'])) {
+            new Msg('É necessário definir uma chave primária para a tabela ' . $table, 3);
+            $this->go('LazyInstall', 'inicio');
+        }
         $this->set("dbSchema", $dbSchema);
-        $this->set("tableSchema", $dbSchema[$this->getParam(0)]);
+        $this->set("tableSchema", $dbSchema[$table]);
         $this->set("lazyjson", $this->getLazyJson());
     }
 
@@ -44,7 +51,8 @@ class LazyInstall extends \Lazydev\Core\Controller
             $this->cretateController($table, $dbSchema);
         }
         $this->createView($table, $dbSchema);
-        exit;
+        new Msg('<a href="' . PATH . '/' . ucfirst($table) . '/lista">Teste aqui a URL.</a>');
+        $this->go('LazyInstall', 'inicio');
     }
 
     private function cretateModel(string $table, array $dbSchema)
@@ -80,7 +88,7 @@ class LazyInstall extends \Lazydev\Core\Controller
             fwrite($handle, $this->nlt(1) . '* @return ' . ucfirst($f->reftable) . ' $' . $f->reftable);
             fwrite($handle, $this->nlt(1) . '*/');
             fwrite($handle, $this->nlt(1) . 'function get' . ucfirst($f->reftable) . $f->used . '(){');
-            fwrite($handle, $this->nlt(2) . 'return $this->belongsTo(\'' . ucfirst($f->reftable) . '\',\'' . $f->fk . '\');');
+            fwrite($handle, $this->nlt(2) . 'return $this->belongsTo(\'' . ucfirst($f->reftable) . '\',' . $f->fkhtml . ');');
             fwrite($handle, $this->nlt(1) . "}");
         }
         # métodos possui ...
@@ -94,7 +102,7 @@ class LazyInstall extends \Lazydev\Core\Controller
                     fwrite($handle, $this->nlt(1) . '* @return ' . ucfirst($fk->table) . '[] array de ' . ucfirst($fk->table));
                     fwrite($handle, $this->nlt(1) . '*/');
                     fwrite($handle, $this->nlt(1) . 'function get' . ucfirst($fk->table) . 's'  . $fk->used . '($criteria = NULL){');
-                    fwrite($handle, $this->nlt(2) . 'return $this->hasMany(\'' . ucfirst($fk->table) . '\',\'' . $fk->fk . '\',$criteria);');
+                    fwrite($handle, $this->nlt(2) . 'return $this->hasMany(\'' . ucfirst($fk->table) . '\',' . $fk->fkhtml . ', $criteria);');
                     fwrite($handle, $this->nlt(1) . "}");
                 }
             }
@@ -117,7 +125,7 @@ class LazyInstall extends \Lazydev\Core\Controller
                     fwrite($handle, $this->nlt(1) . '*/');
                     fwrite($handle, $this->nlt(1) . 'function get' . ucfirst($fk->reftable) . 's' . $fk->used . '($criteria = NULL){');
                     fwrite($handle, $this->nlt(2) . 'return $this->hasNN(');
-                    fwrite($handle, '\'' . ucfirst($fk->table) . '\', \'' . $ffk . '\', \'' . ucfirst($fk->reftable) . '\', \'' . $fk->fk . '\', $criteria');
+                    fwrite($handle, '\'' . ucfirst($fk->table) . '\', \'' . $ffk . '\', \'' . ucfirst($fk->reftable) . '\', ' . $fk->fkhtml . ', $criteria');
                     fwrite($handle, ');');
                     fwrite($handle, $this->nlt(1) . "}");
                 }
@@ -137,7 +145,7 @@ class LazyInstall extends \Lazydev\Core\Controller
                     fwrite($handle, $this->nlt(1) . '*/');
                     fwrite($handle, $this->nlt(1) . 'function get' . ucfirst($fk->reftable) . 's' . $fk->used . '($criteria = NULL){');
                     fwrite($handle, $this->nlt(2) . 'return $this->hasNN(');
-                    fwrite($handle, '\'' . ucfirst($fk->table) . '\', \'' . $ffk . '\', \'' . ucfirst($fk->reftable) . '\', \'' . $fk->fk . '\', $criteria');
+                    fwrite($handle, '\'' . ucfirst($fk->table) . '\', \'' . $ffk . '\', \'' . ucfirst($fk->reftable) . '\', ' . $fk->fkhtml . ', $criteria');
                     fwrite($handle, ');');
                     fwrite($handle, $this->nlt(1) . "}");
                 }
@@ -164,11 +172,21 @@ class LazyInstall extends \Lazydev\Core\Controller
             return;
         }
         # namespace e classe
+        $uses = [];
+        $uses[] = $model;
+        foreach ($tableSchema['fields'] as $f) {
+            if ($f->fk) {
+                $uses[] = ucfirst($f->fk);
+            }
+        }
         fwrite($handle, "<?php");
         fwrite($handle, "{$this->nlt(0)}namespace Lazydev\Controller;\n");
         fwrite($handle, "{$this->nlt(0)}use Lazydev\Core\Criteria;");
-        fwrite($handle, "{$this->nlt(0)}use Lazydev\Model\\$model as Model$model;\n");
-        fwrite($handle, "{$this->nlt(0)}final class $model extends \Lazydev\Core\Controller{ \n");
+        fwrite($handle, "{$this->nlt(0)}use Lazydev\Core\Msg;");
+        foreach (array_unique($uses) as $u) {
+            fwrite($handle, "{$this->nlt(0)}use Lazydev\Model\\$u as Model$u;");
+        }
+        fwrite($handle, "\n{$this->nlt(0)}final class $model extends \Lazydev\Core\Controller{ \n");
 
         # método lista
         if (filter_input(INPUT_POST, 'createlista')) {
@@ -178,8 +196,8 @@ class LazyInstall extends \Lazydev\Core\Controller
             fwrite($handle, $this->nlt(1) . 'function lista(){');
             fwrite($handle, $this->nlt(2) . '$this->setTitle(\'Lista\');');
             fwrite($handle, $this->nlt(2) . '$c = new Criteria();');
-            fwrite($handle, $this->nlt(2) . '$c->setOrder(\''.$significativo.'\');');
-            fwrite($handle, $this->nlt(2) . "\$".$table."s=Model$model::getList(\$c);");
+            fwrite($handle, $this->nlt(2) . '$c->setOrder(\'' . $significativo . '\');');
+            fwrite($handle, $this->nlt(2) . "\$" . $table . "s=Model$model::getList(\$c);");
             fwrite($handle, $this->nlt(2) . '$this->set(\'' . $table . 's\', $' . $table . 's);');
             fwrite($handle, $this->nlt(1) . "}\n");
         }
@@ -190,7 +208,51 @@ class LazyInstall extends \Lazydev\Core\Controller
             fwrite($handle, $this->nlt(1) . "# renderiza a visão /view/$model/ver.tpl");
             fwrite($handle, $this->nlt(1) . "# url: /$model/ver/2");
             fwrite($handle, $this->nlt(1) . 'function ver(){');
-            fwrite($handle, $this->nlt(2) . '$this->setTitle(\'Ver\');');
+            fwrite($handle, $this->nlt(2) . 'try {');
+            $params = [];
+            $i = 0;
+            foreach ($pks as $pk) {
+                $params[] = '$this->getParam(' . $i++ . ')';
+            }
+            fwrite($handle, $this->nlt(3) . '$' . $table . ' = new Model' . $model . '(' . implode(', ', $params) . ');');
+            fwrite($handle, $this->nlt(3) . '$this->set(\'' . ($table) . '\', $' . ($table) . ');');
+            foreach ($dbSchema as $v) {
+                foreach ($v['fk'] as $fk) {
+                    if ($fk->reftable == $table && filter_input(INPUT_POST, 'verLista_' . $fk->table . '_' . $fk->fk)) {
+                        fwrite($handle, $this->nlt(3) . '$this->set(\'' . ($fk->table) . 's\', $' . ($table) . '->get' . ucfirst($fk->table) . 's());');
+                    }
+                }
+            }
+            foreach ($dbSchema as $dbtables) {
+                $ffk = '';
+                foreach ($dbtables['fk'] as $fk) {
+                    if ($fk->reftable == $table) {
+                        $ffk = $fk->fk;
+                        continue;
+                    }
+                    if ($ffk && filter_input(INPUT_POST, 'verListaNN_' . $fk->reftable . 's' . $fk->used)) {
+                        fwrite($handle, $this->nlt(3) . '$this->set(\'' . $fk->reftable . 's' . $fk->used . '\', $' . ($table) . '->get' . ucfirst($fk->reftable . 's' . $fk->used) . '());');
+                    }
+                }
+                $ffk = '';
+                foreach (array_reverse($dbtables['fk']) as $fk) {
+                    if ($fk->reftable == $table) {
+                        $ffk = $fk->fk;
+                        continue;
+                    }
+                    if ($ffk && filter_input(INPUT_POST, 'verListaNN_' . $fk->reftable . 's' . $fk->used)) {
+                        fwrite($handle, $this->nlt(3) . '$this->set(\'' . $fk->reftable . 's' . $fk->used . '\', $' . ($table) . '->get' . ucfirst($fk->reftable . 's' . $fk->used) . '());');
+                    }
+                }
+            }
+            fwrite($handle, $this->nlt(3) . '$this->setTitle($' . $table . '->' . $significativo . ');');
+            fwrite($handle, $this->nlt(2) . '} catch (\Exception $e) {');
+            fwrite($handle, $this->nlt(3) . 'new Msg($e->getMessage(), 2);');
+            fwrite($handle, $this->nlt(3) . "if (\$this->getParam('url')) {");
+            fwrite($handle, $this->nlt(4) . "\$this->goUrl(\$this->getParam('url'));");
+            fwrite($handle, $this->nlt(3) . "}");
+            fwrite($handle, $this->nlt(3) . '$this->go(\'' . $table . '\', \'lista\');');
+            fwrite($handle, $this->nlt(2) . '}');
             fwrite($handle, $this->nlt(1) . "}\n");
         }
 
@@ -200,7 +262,19 @@ class LazyInstall extends \Lazydev\Core\Controller
             fwrite($handle, $this->nlt(1) . "# renderiza a visão /view/$model/cadastrar.tpl");
             fwrite($handle, $this->nlt(1) . "# url: /$model/cadastrar");
             fwrite($handle, $this->nlt(1) . 'function cadastrar(){');
-            fwrite($handle, $this->nlt(2) . '$this->setTitle(\'Cadastrar\');');
+            fwrite($handle, $this->nlt(2) . '$this->setTitle(\'Cadastrar ' . $model . '\');');
+            fwrite($handle, $this->nlt(2) . "\$$table = new Model" . $model . ';');
+            fwrite($handle, $this->nlt(2) . '$this->set(\'' . $table . '\', $' . $table . ');');
+            $tablesfks = [];
+            foreach ($tableSchema['fields'] as $f) {
+                if ($f->fk) {
+                    $tablesfks[$f->fk] = $f->fkpk;
+                }
+            }
+            foreach ($tablesfks as $k => $f) {
+                fwrite($handle, $this->nlt(2) . '$this->set(\'' . ($k) . 's\',  ');
+                fwrite($handle, 'array_column((array)Model' . ucfirst($k) . '::getList(), \'' . $dbSchema[$k]['selected'] . '\', \''.$f.'\'));');
+            }
             fwrite($handle, $this->nlt(1) . "}\n");
         }
 
@@ -252,20 +326,29 @@ class LazyInstall extends \Lazydev\Core\Controller
         fwrite($handle, $this->nlt(1) . "}");
     }
 
-    private function createView(string $table, array $dbSchema){
+    private function createView(string $table, array $dbSchema)
+    {
         if (filter_input(INPUT_POST, 'createlista')) {
             $this->createViewLista($table, $dbSchema);
         }
+        if (filter_input(INPUT_POST, 'createver')) {
+            $this->createViewVer($table, $dbSchema);
+        }
+        if (filter_input(INPUT_POST, 'createcadastrar')) {
+            $this->createViewCadastrar($table, $dbSchema);
+        }
     }
 
-    private function createViewLista(string $table, array $dbSchema){
+    private function createViewLista(string $table, array $dbSchema)
+    {
         $tableSchema = $dbSchema[$table];
         $pks = $tableSchema['pk'];
         $fks = $tableSchema['fk'];
         $fields = $tableSchema['fields'];
         $model = ucfirst($tableSchema['name']);
         $significativo = filter_input(INPUT_POST, 'campoSignificativo');
-        
+        $sigla = substr($table, 0, 1);
+
         if (!is_dir('../view/' . $model)) {
             mkdir('../view/' . $model);
         }
@@ -274,12 +357,171 @@ class LazyInstall extends \Lazydev\Core\Controller
             new Msg("Não foi possível criar view/$model/lista.tpl. Verifique as permissões do diretório", 3);
             return;
         }
-        fwrite($handle, "<h1>Lista de $model</h1>");
-        fwrite($handle, $this->nlt(0) . "{foreach $".$table."s as $".substr($table,0,1)."}");
-        fwrite($handle, $this->nlt(1) . '<p>{$'.substr($table,0,1).'->'.$significativo.'}</p>');
+        fwrite($handle, "<h2>" . $this->getPlural($model) . "</h2>");
+        fwrite($handle, $this->nlt(0) . "{foreach $" . $table . "s as $" . $sigla . "}");
+        $params = '';
+        foreach ($pks as $pk) {
+            $params .= '{$' . $sigla . '->' . $pk . '}/';
+        }
+        fwrite($handle, $this->nlt(1) . '<div> <a href="{PATH}/' . "$model/ver/$params" . '">');
+        fwrite($handle, '{$' . $sigla . '->' . $significativo . '}</a> </div>');
         fwrite($handle, $this->nlt(0) . "{foreachelse}");
         fwrite($handle, $this->nlt(1) . "<p>Nada para exibir aqui.</p>");
         fwrite($handle, $this->nlt(0) . "{/foreach}");
+    }
+
+    private function createViewVer(string $table, array $dbSchema)
+    {
+        $tableSchema = $dbSchema[$table];
+        $pks = $tableSchema['pk'];
+        $fks = $tableSchema['fk'];
+        $fields = $tableSchema['fields'];
+        $model = ucfirst($tableSchema['name']);
+        $significativo = filter_input(INPUT_POST, 'campoSignificativo');
+        $sigla = substr($table, 0, 1);
+
+        if (!is_dir('../view/' . $model)) {
+            mkdir('../view/' . $model);
+        }
+        $handle = fopen("../view/$model/ver.tpl", 'w');
+        if (!$handle) {
+            new Msg("Não foi possível criar view/$model/ver.tpl. Verifique as permissões do diretório", 3);
+            return;
+        }
+        fwrite($handle, '<h1>{$' . $table . '->' . $significativo . '}</h1>' . "\n");
+        foreach ($fields as $f) {
+            if (!filter_input(INPUT_POST, 'ver_' . $f->Field) || $f->Field == $significativo || $f->fk != 0) {
+                continue;
+            }
+            fwrite($handle, $this->nlt(0) . '<div>' . $f->Field . ': {$' . $table . '->' . $f->Field . '}</div>');
+        }
+        foreach ($fks as $fk) {
+            if (!filter_input(INPUT_POST, 'ver_' . $fk->fk)) {
+                continue;
+            }
+            $field = filter_input(INPUT_POST, 'verRef_' . $table . '_' . $fk->fk);
+            fwrite($handle, $this->nlt(0) . '<div>');
+            fwrite($handle, $fk->reftable . ': ');
+            fwrite($handle, '<a href="{PATH}/' . ucfirst($fk->reftable) . '/ver/{$' . $table . '->get' . ucfirst($fk->reftable) . '()->' . $fk->refpk . '}">');
+            fwrite($handle, '{$' . $table . '->get' . ucfirst($fk->reftable) . '()->' . $field . '}');
+            fwrite($handle, '</a>');
+            fwrite($handle, '</div>');
+        }
+        foreach ($dbSchema as $k => $v) {
+            foreach ($v['fk'] as $fk) {
+                if ($fk->reftable == $table && filter_input(INPUT_POST, 'verLista_' . $fk->table . '_' . $fk->fk)) {
+                    fwrite($handle, $this->nlt(0));
+                    fwrite($handle, $this->nlt(0) . '{* lista de ' . $fk->table . '*}');
+                    fwrite($handle, $this->nlt(0) . '{include file=\'../' . ucfirst($fk->table) . '/lista.tpl\'}');
+                }
+            }
+        }
+        foreach ($dbSchema as $dbtables) {
+            $ffk = '';
+            foreach ($dbtables['fk'] as $fk) {
+                if ($fk->reftable == $table) {
+                    $ffk = $fk->fk;
+                    continue;
+                }
+                if ($ffk && filter_input(INPUT_POST, 'verListaNN_' . $fk->reftable . 's' . $fk->used)) {
+                    fwrite($handle, $this->nlt(0));
+                    fwrite($handle, $this->nlt(0) . '{* lista de ' . $fk->reftable . '*}');
+                    fwrite($handle, $this->nlt(0) . '{include file=\'../' . ucfirst($fk->reftable) . '/lista.tpl\'}');
+                }
+            }
+            $ffk = '';
+            foreach (array_reverse($dbtables['fk']) as $fk) {
+                if ($fk->reftable == $table) {
+                    $ffk = $fk->fk;
+                    continue;
+                }
+                if ($ffk && filter_input(INPUT_POST, 'verListaNN_' . $fk->reftable . 's' . $fk->used)) {
+                    fwrite($handle, $this->nlt(0));
+                    fwrite($handle, $this->nlt(0) . '{* lista de ' . $fk->reftable . '*}');
+                    fwrite($handle, $this->nlt(0) . '{include file=\'../' . ucfirst($fk->reftable) . '/lista.tpl\'}');
+                }
+            }
+        }
+    }
+
+    private function createViewCadastrar(string $table, array $dbSchema)
+    {
+        $tableSchema = $dbSchema[$table];
+        $pks = $tableSchema['pk'];
+        $fks = $tableSchema['fk'];
+        $fields = $tableSchema['fields'];
+        $model = ucfirst($tableSchema['name']);
+        $significativo = filter_input(INPUT_POST, 'campoSignificativo');
+        $sigla = substr($table, 0, 1);
+
+        if (!is_dir('../view/' . $model)) {
+            mkdir('../view/' . $model);
+        }
+        $handle = fopen("../view/$model/cadastrar.tpl", 'w');
+        if (!$handle) {
+            new Msg("Não foi possível criar view/$model/cadastrar.tpl. Verifique as permissões do diretório", 3);
+            return;
+        }
+        fwrite($handle, "<h1>Cadastrar " . $model . "</h1>");
+        fwrite($handle, $this->nlt(0) . '<form method="post">');
+        foreach ($fields as $f) {
+            if ($f->Extra == 'auto_increment') {
+                continue;
+            }
+            fwrite($handle, $this->nlt(1) . '<div>');
+            $label = filter_input(INPUT_POST, 'label_' . $f->Field);
+            $type = filter_input(INPUT_POST, 'finalidade_' . $f->Field);
+            $required = $f->Null == 'NO' ? ' required' : '';
+            if ($f->fk) {
+                fwrite($handle, $this->nlt(2) . "<label for=\"$f->Field\">$label</label>");
+                $fkpks = [];
+                $fkstr = filter_input(INPUT_POST, 'finalidadeSignificativo_' . $f->Field);
+                foreach ($dbSchema[$f->fk]['pk'] as $fkpk) {
+                    $fkpks[] = '{$' . substr($f->fk, 0, 1) . '->' . $fkpk . '}';
+                }
+                if ($type == 'selectFK') {
+                    fwrite($handle, $this->nlt(2) . '<select name="' . $f->Field . '" id="' . $f->Field . '">');
+                    if (!$required) {
+                        fwrite($handle, $this->nlt(3) . '<option></option>');
+                    }
+                    fwrite($handle, $this->nlt(3) . '{html_options options=$' . $f->fk . 's selected=$' . $table . '->' . $f->Field . '}');
+                    #fwrite($handle, $this->nlt(3) . '{foreach $' . $f->fk . 's as $' . substr($f->fk, 0, 1) . '}');
+                    #fwrite($handle, $this->nlt(4) . '<option value="' . implode('|', $fkpks) . '">{$' . substr($f->fk, 0, 1) . '->' . $fkstr . '}</option>');
+                    #fwrite($handle, $this->nlt(3) . '{/foreach}');
+                    fwrite($handle, $this->nlt(2) . '</select>');
+                } else {
+                    fwrite($handle, $this->nlt(4) . '<div>');
+                    fwrite($handle, $this->nlt(3) . '{foreach $' . $f->fk . 's as $' . substr($f->fk, 0, 1) . '}');
+                    fwrite($handle, $this->nlt(4) . '<input type="radio" value="' . implode('|', $fkpks) . '" name="' . $f->Field . '" id="' . $f->Field . implode('|', $fkpks) . '"' . $required . '>');
+                    $selected = '';
+                    fwrite($handle, $this->nlt(4) . '<label for="' . $f->Field . implode('|', $fkpks) . '">{$' . substr($f->fk, 0, 1) . '->' . $fkstr . '}</label>');
+                    fwrite($handle, $this->nlt(4) . '<br>');
+                    fwrite($handle, $this->nlt(3) . '{/foreach}');
+                    fwrite($handle, $this->nlt(4) . '</div>');
+                }
+            } else {
+                if ($type == 'html') {
+                    fwrite($handle, $this->nlt(2) . "<label for=\"$f->Field\">$label</label>");
+                    fwrite($handle, $this->nlt(2) . '<textarea name="' . $f->Field . '" id="' . $f->Field . '" ' . $required . '>{$' . $table . '->' . $f->Field . '}</textarea>');
+                } elseif ($type == 'checkbox') {
+                    fwrite($handle, $this->nlt(2) . '{if $' . $table . '->' . $f->Field . '}');
+                    fwrite($handle, $this->nlt(3) . '{assign var=checked value=\'checked\'}');
+                    fwrite($handle, $this->nlt(2) . '{else}');
+                    fwrite($handle, $this->nlt(3) . '{assign var=checked value=\'\'}');
+                    fwrite($handle, $this->nlt(2) . '{/if}');
+                    fwrite($handle, $this->nlt(2) . '<input type="checkbox" name="' . $f->Field . '" id="' . $f->Field . '" {$checked}>');
+                    fwrite($handle, $this->nlt(2) . "<label for=\"$f->Field\">$label</label>");
+                } elseif ($type != 'now') {
+                    fwrite($handle, $this->nlt(2) . "<label for=\"$f->Field\">$label</label>");
+                    fwrite($handle, $this->nlt(2) . '<input type=' . $type . ' name="' . $f->Field . '" id="' . $f->Field . '" value="{$' . $table . '->' . $f->Field . '}" ' . $required . '>');
+                }
+            }
+            fwrite($handle, $this->nlt(1) . '</div>');
+        }
+        fwrite($handle, $this->nlt(1) . '<div>');
+        fwrite($handle, $this->nlt(2) . '<input type="submit" value="cadastrar">');
+        fwrite($handle, $this->nlt(1) . '</div>');
+        fwrite($handle, $this->nlt(0) . '</form>');
     }
 
 
@@ -320,6 +562,7 @@ class LazyInstall extends \Lazydev\Core\Controller
             $pk = [];
             $fks = $this->getFKs($table->name);
             $selected = 'selected';
+            $db[$table->name]['selected'] = $tableschema[0]->Field;
             foreach ($tableschema as $f) {
                 $f->InputType = '';
                 $f->selected = '';
@@ -338,6 +581,9 @@ class LazyInstall extends \Lazydev\Core\Controller
                 } elseif (strstr($f->Type, 'text')) {
                     $f->InputType = 'html';
                 } else {
+                    if (!empty($selected)) {
+                        $db[$table->name]['selected'] = $f->Field;
+                    }
                     $f->InputType = 'text';
                     $f->selected = $selected;
                     $selected = '';
@@ -346,6 +592,7 @@ class LazyInstall extends \Lazydev\Core\Controller
                     $pk[] = $f->Field;
                 }
                 $f->fk = 0;
+                $f->fkpk = 0;
                 array_map(function ($fk) {
                     $fk->used = '';
                 }, (array)$fks);
@@ -356,6 +603,7 @@ class LazyInstall extends \Lazydev\Core\Controller
                     $fkUsed[] = $fk->reftable;
                     if ($fk->fk == $f->Field) {
                         $f->fk = $fk->reftable;
+                        $f->fkpk = $fk->refpk;
                     }
                 }
             }
@@ -374,11 +622,31 @@ class LazyInstall extends \Lazydev\Core\Controller
 
     private function getFKs($table)
     {
-        return $this->query("SELECT table_name AS `table`,  column_name AS  `fk`, 
-        referenced_table_name AS `reftable`, referenced_column_name  AS `refpk` 
+        $rs = $this->query("SELECT CONSTRAINT_NAME AS `constraint`, table_name AS `table`,  column_name AS  `fk`, ' ' AS `fkhtml`,
+        referenced_table_name AS `reftable`, referenced_column_name  AS `refpk`, ' ' AS `refpkhtml`
         FROM information_schema.key_column_usage
         WHERE referenced_table_name IS NOT NULL 
         AND TABLE_SCHEMA=(SELECT database() AS db)  AND `table_name`='$table'");
+        foreach ($rs as $k1 => $fk) {
+            $fk->fkhtml = (array)$fk->fk;
+            $fk->refpkhtml = (array)$fk->refpk;
+            foreach ($rs as $k2 => $fk2) {
+                if ($fk->constraint == $fk2->constraint && $k1 != $k2) {
+                    $fk->fkhtml[] = $fk2->fk;
+                    $fk->refpkhtml[] = $fk2->refpk;
+                }
+            }
+        }
+        foreach ($rs as $k1 => $fk) {
+            if (count($fk->fkhtml) > 1) {
+                $fk->fkhtml = '[\'' . implode('\', \'', $fk->fkhtml) . '\']';
+                $fk->refpkhtml = '[\'' . implode('\', \'', $fk->refpkhtml) . '\']';
+            } else {
+                $fk->fkhtml = '\'' . implode('', $fk->fkhtml) . '\'';
+                $fk->refpkhtml = '\'' . implode('', $fk->refpkhtml) . '\'';
+            }
+        }
+        return $rs;
     }
 
     private function nlt($n = 1)
