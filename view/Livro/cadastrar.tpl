@@ -22,15 +22,15 @@
     </div>
     <div>
         <label for="codCategoria">categoria</label>
-                <div>
+        <div>
             {html_radios required='required' name='codCategoria' options=$categorias selected=$livro->codCategoria separator='<br>'}
-                </div>
+        </div>
     </div>
     <div>
         <label for="codEditora">editora</label>
-                <div>
+        <div>
             {html_radios  name='codEditora' options=$editoras selected=$livro->codEditora separator='<br>'}
-                </div>
+        </div>
     </div>
     <div>
         {if $livro->lido}

@@ -273,7 +273,7 @@ class LazyInstall extends \Lazydev\Core\Controller
             }
             foreach ($tablesfks as $k => $f) {
                 fwrite($handle, $this->nlt(2) . '$this->set(\'' . ($k) . 's\',  ');
-                fwrite($handle, 'array_column((array)Model' . ucfirst($k) . '::getList(), \'' . $dbSchema[$k]['selected'] . '\', \''.$f.'\'));');
+                fwrite($handle, 'array_column((array)Model' . ucfirst($k) . '::getList(), \'' . $dbSchema[$k]['selected'] . '\', \'' . $f . '\'));');
             }
             fwrite($handle, $this->nlt(1) . "}\n");
         }
@@ -282,8 +282,18 @@ class LazyInstall extends \Lazydev\Core\Controller
         if (filter_input(INPUT_POST, 'createcadastrar')) {
             fwrite($handle, $this->nlt(1) . "# Recebe os dados do formulário de cadastrar $model e redireciona para a lista");
             fwrite($handle, $this->nlt(1) . 'function post_cadastrar(){');
-            # filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS);
+            fwrite($handle, $this->nlt(2) . "\$$table = new Model" . $model . ';');
+            fwrite($handle, $this->nlt(2) . '$this->set(\'' . $table . '\', $' . $table . ');');
+            fwrite($handle, $this->nlt(2) . 'try {');
+            fwrite($handle, $this->nlt(3) . '$' . $table . '->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS));');
+            fwrite($handle, $this->nlt(3) . 'new Msg("Cadastro realizado com sucesso.", 1);');
+            fwrite($handle, $this->nlt(3) . "if (\$this->getParam('url')) {");
+            fwrite($handle, $this->nlt(4) . "\$this->goUrl(\$this->getParam('url'));");
+            fwrite($handle, $this->nlt(3) . "}");
             fwrite($handle, $this->nlt(2) . '$this->go(\'' . $model . '/lista\');');
+            fwrite($handle, $this->nlt(2) . '} catch (\Exception $e) {');
+            fwrite($handle, $this->nlt(3) . 'new Msg($e->getMessage(), 3);');
+            fwrite($handle, $this->nlt(2) . '}');
             fwrite($handle, $this->nlt(1) . "}\n");
         }
 
@@ -488,9 +498,9 @@ class LazyInstall extends \Lazydev\Core\Controller
                     fwrite($handle, $this->nlt(3) . '{html_options options=$' . $f->fk . 's selected=$' . $table . '->' . $f->Field . '}');
                     fwrite($handle, $this->nlt(2) . '</select>');
                 } else {
-                    fwrite($handle, $this->nlt(4) . '<div>');
-                    fwrite($handle, $this->nlt(3) . '{html_radios '.($required?'required=\'required\'':'').' name=\'' . $f->Field . '\' options=$' . $f->fk . 's selected=$' . $table . '->' . $f->Field . ' separator=\'<br>\'}');
-                    fwrite($handle, $this->nlt(4) . '</div>');
+                    fwrite($handle, $this->nlt(2) . '<div>');
+                    fwrite($handle, $this->nlt(3) . '{html_radios ' . ($required ? 'required=\'required\'' : '') . ' name=\'' . $f->Field . '\' options=$' . $f->fk . 's selected=$' . $table . '->' . $f->Field . ' separator=\'<br>\'}');
+                    fwrite($handle, $this->nlt(2) . '</div>');
                 }
             } else {
                 if ($type == 'html') {
@@ -516,7 +526,6 @@ class LazyInstall extends \Lazydev\Core\Controller
         fwrite($handle, $this->nlt(1) . '</div>');
         fwrite($handle, $this->nlt(0) . '</form>');
     }
-
 
     private function getLazyJson()
     {

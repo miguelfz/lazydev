@@ -25,6 +25,7 @@ final class Autor extends \Lazydev\Core\Controller{
         try {
             $autor = new ModelAutor($this->getParam(0));
             $this->set('autor', $autor);
+            $this->set('livroautors', $autor->getLivroautors());
             $this->set('livros', $autor->getLivros());
             $this->setTitle($autor->nome);
         } catch (\Exception $e) {
@@ -47,7 +48,18 @@ final class Autor extends \Lazydev\Core\Controller{
 
     # Recebe os dados do formulário de cadastrar Autor e redireciona para a lista
     function post_cadastrar(){
+        $autor = new ModelAutor;
+        $this->set('autor', $autor);
+        try {
+            $autor->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS));
+            new Msg("Cadastro realizado com sucesso.", 1);
+            if ($this->getParam('url')) {
+                $this->goUrl($this->getParam('url'));
+            }
         $this->go('Autor/lista');
+        } catch (\Exception $e) {
+            new Msg($e->getMessage(), 3);
+        }
     }
 
     # Editar Autor

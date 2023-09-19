@@ -52,7 +52,18 @@ final class Livro extends \Lazydev\Core\Controller{
 
     # Recebe os dados do formulário de cadastrar Livro e redireciona para a lista
     function post_cadastrar(){
+        $livro = new ModelLivro;
+        $this->set('livro', $livro);
+        try {
+            $livro->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS));
+            new Msg("Cadastro realizado com sucesso.", 1);
+            if ($this->getParam('url')) {
+                $this->goUrl($this->getParam('url'));
+            }
         $this->go('Livro/lista');
+        } catch (\Exception $e) {
+            new Msg($e->getMessage(), 3);
+        }
     }
 
     # Editar Livro
