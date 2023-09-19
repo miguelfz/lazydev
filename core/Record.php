@@ -48,8 +48,12 @@ abstract class Record
         return null;
     }
 
+    /**
+     * Aplica filtros ao valores dos atriburos de SQL Injection e XSS attack
+     */
     public function sanitize()
-    {
+    {        
+        // TODO
     }
 
     /**

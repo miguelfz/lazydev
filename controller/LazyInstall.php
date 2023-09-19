@@ -282,6 +282,7 @@ class LazyInstall extends \Lazydev\Core\Controller
         if (filter_input(INPUT_POST, 'createcadastrar')) {
             fwrite($handle, $this->nlt(1) . "# Recebe os dados do formulário de cadastrar $model e redireciona para a lista");
             fwrite($handle, $this->nlt(1) . 'function post_cadastrar(){');
+            # filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS);
             fwrite($handle, $this->nlt(2) . '$this->go(\'' . $model . '/lista\');');
             fwrite($handle, $this->nlt(1) . "}\n");
         }
@@ -485,18 +486,10 @@ class LazyInstall extends \Lazydev\Core\Controller
                         fwrite($handle, $this->nlt(3) . '<option></option>');
                     }
                     fwrite($handle, $this->nlt(3) . '{html_options options=$' . $f->fk . 's selected=$' . $table . '->' . $f->Field . '}');
-                    #fwrite($handle, $this->nlt(3) . '{foreach $' . $f->fk . 's as $' . substr($f->fk, 0, 1) . '}');
-                    #fwrite($handle, $this->nlt(4) . '<option value="' . implode('|', $fkpks) . '">{$' . substr($f->fk, 0, 1) . '->' . $fkstr . '}</option>');
-                    #fwrite($handle, $this->nlt(3) . '{/foreach}');
                     fwrite($handle, $this->nlt(2) . '</select>');
                 } else {
                     fwrite($handle, $this->nlt(4) . '<div>');
-                    fwrite($handle, $this->nlt(3) . '{foreach $' . $f->fk . 's as $' . substr($f->fk, 0, 1) . '}');
-                    fwrite($handle, $this->nlt(4) . '<input type="radio" value="' . implode('|', $fkpks) . '" name="' . $f->Field . '" id="' . $f->Field . implode('|', $fkpks) . '"' . $required . '>');
-                    $selected = '';
-                    fwrite($handle, $this->nlt(4) . '<label for="' . $f->Field . implode('|', $fkpks) . '">{$' . substr($f->fk, 0, 1) . '->' . $fkstr . '}</label>');
-                    fwrite($handle, $this->nlt(4) . '<br>');
-                    fwrite($handle, $this->nlt(3) . '{/foreach}');
+                    fwrite($handle, $this->nlt(3) . '{html_radios '.($required?'required=\'required\'':'').' name=\'' . $f->Field . '\' options=$' . $f->fk . 's selected=$' . $table . '->' . $f->Field . ' separator=\'<br>\'}');
                     fwrite($handle, $this->nlt(4) . '</div>');
                 }
             } else {

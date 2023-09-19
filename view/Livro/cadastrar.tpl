@@ -22,22 +22,21 @@
     </div>
     <div>
         <label for="codCategoria">categoria</label>
-        <select name="codCategoria" id="codCategoria">
-            {html_options options=$categorias selected=$livro->codCategoria}
-        </select>
+                <div>
+            {html_radios required='required' name='codCategoria' options=$categorias selected=$livro->codCategoria separator='<br>'}
+                </div>
     </div>
     <div>
         <label for="codEditora">editora</label>
-        <select name="codEditora" id="codEditora">
-            <option></option>
-            {html_options options=$editoras selected=$livro->codEditora}
-        </select>
+                <div>
+            {html_radios  name='codEditora' options=$editoras selected=$livro->codEditora separator='<br>'}
+                </div>
     </div>
     <div>
         {if $livro->lido}
-        {assign var=checked value='checked'}
+            {assign var=checked value='checked'}
         {else}
-        {assign var=checked value=''}
+            {assign var=checked value=''}
         {/if}
         <input type="checkbox" name="lido" id="lido" {$checked}>
         <label for="lido">lido</label>

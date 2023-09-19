@@ -8,9 +8,9 @@
     </div>
     <div>
         <label for="codAutor">livroautor</label>
-        <select name="codAutor" id="codAutor">
-            {html_options options=$livroautors selected=$teste->codAutor}
-        </select>
+                <div>
+            {html_radios required='' name='codAutor' options=$livroautors selected=$teste->codAutor separator='<br>'}
+                </div>
     </div>
     <div>
         <input type="submit" value="cadastrar">
