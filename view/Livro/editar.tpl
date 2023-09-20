@@ -1,4 +1,4 @@
-<h1>Cadastrar Livro</h1>
+<h1>Editar Livro</h1>
 <form method="post">
     <div>
         <label for="titulo">titulo</label>

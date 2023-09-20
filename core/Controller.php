@@ -73,20 +73,19 @@ class Controller
      * (opcional) Utilize um array associativo para enviar parâmetros adicionais via GET.
      * 
      * Exemplo 1: Para se construir a url /Produto/all/?categoria=Foo&tipo=Bar
-     * $this->go('Produto','all', ['categoria'=>'Foo', 'tipo'=>'Bar'] )
+     * $this->go('Produto/all', ['categoria'=>'Foo', 'tipo'=>'Bar'] )
      * 
-     * Exemplo 2: Para se construir uma URL para /Index/index
-     * $this->go('Index','index' )
+     * Exemplo 2: Para se construir uma URL para /Produto/all
+     * $this->go('Produto/all' )
      *      
-     * @param String $controller
-     * @param String $action
+     * @param String $url
      * @param array $urlParams
      */
-    protected function go(string $controller, string $action = 'index', array $urlParams = [])
+    protected function go(string $url, array $urlParams = [])
     {
-        $controller = ucfirst($controller);
+        $controller = ucfirst($url);
         $anchor = '';
-        $link = PATH . '/' . ucfirst($controller) . '/' . $action . '/';
+        $link = PATH . '/' . ucfirst($controller) . '/';
         if (is_array($urlParams)) {
             $carr = (Config::get('criptedGetParamns'));
             if (is_array($carr)) {

@@ -35,7 +35,7 @@ final class Livro extends \Lazydev\Core\Controller{
             if ($this->getParam('url')) {
                 $this->goUrl($this->getParam('url'));
             }
-            $this->go('livro', 'lista');
+            $this->go('livro/lista');
         }
     }
 
@@ -70,12 +70,35 @@ final class Livro extends \Lazydev\Core\Controller{
     # renderiza a visão /view/Livro/editar.tpl
     # url: /Livro/editar
     function editar(){
-        $this->setTitle('Editar');
+        try {
+            $this->setTitle('Editar Livro');
+            $livro = new ModelLivro($this->getParam(0));
+            $this->set('livro', $livro);
+            $this->set('categorias',  array_column((array)ModelCategoria::getList(), 'nome', 'cod'));
+            $this->set('editoras',  array_column((array)ModelEditora::getList(), 'nome', 'cod'));
+        } catch (\Exception $e) {
+            new Msg($e->getMessage(), 3);
+            if ($this->getParam('url')) {
+                $this->goUrl($this->getParam('url'));
+            }
+            $this->go('livro/lista');
+        }
     }
 
     # Recebe os dados do formulário de editar Livro e redireciona para a lista
     function post_editar(){
-        $this->go('Livro/lista');
+        try {
+            $livro = new ModelLivro($this->getParam(0));
+            $this->set('livro', $livro);
+            $livro->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS));
+            new Msg("Edição realizada com sucesso.", 1);
+            if ($this->getParam('url')) {
+                $this->goUrl($this->getParam('url'));
+            }
+            $this->go('Livro/lista');
+        } catch (\Exception $e) {
+            new Msg($e->getMessage(), 3);
+        }
     }
 
     }

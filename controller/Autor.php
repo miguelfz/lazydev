@@ -33,7 +33,7 @@ final class Autor extends \Lazydev\Core\Controller{
             if ($this->getParam('url')) {
                 $this->goUrl($this->getParam('url'));
             }
-            $this->go('autor', 'lista');
+            $this->go('autor/lista');
         }
     }
 
@@ -66,12 +66,33 @@ final class Autor extends \Lazydev\Core\Controller{
     # renderiza a visão /view/Autor/editar.tpl
     # url: /Autor/editar
     function editar(){
-        $this->setTitle('Editar');
+        try {
+            $this->setTitle('Editar Autor');
+            $autor = new ModelAutor($this->getParam(0));
+            $this->set('autor', $autor);
+        } catch (\Exception $e) {
+            new Msg($e->getMessage(), 3);
+            if ($this->getParam('url')) {
+                $this->goUrl($this->getParam('url'));
+            }
+            $this->go('autor/lista');
+        }
     }
 
     # Recebe os dados do formulário de editar Autor e redireciona para a lista
     function post_editar(){
-        $this->go('Autor/lista');
+        try {
+            $autor = new ModelAutor($this->getParam(0));
+            $this->set('autor', $autor);
+            $autor->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS));
+            new Msg("Edição realizada com sucesso.", 1);
+            if ($this->getParam('url')) {
+                $this->goUrl($this->getParam('url'));
+            }
+            $this->go('Autor/lista');
+        } catch (\Exception $e) {
+            new Msg($e->getMessage(), 3);
+        }
     }
 
     }

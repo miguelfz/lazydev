@@ -33,7 +33,7 @@ class LazyInstall extends \Lazydev\Core\Controller
         $table = $this->getParam(0);
         if (!count($dbSchema[$table]['pk'])) {
             new Msg('É necessário definir uma chave primária para a tabela ' . $table, 3);
-            $this->go('LazyInstall', 'inicio');
+            $this->go('LazyInstall/inicio');
         }
         $this->set("dbSchema", $dbSchema);
         $this->set("tableSchema", $dbSchema[$table]);
@@ -52,7 +52,7 @@ class LazyInstall extends \Lazydev\Core\Controller
         }
         $this->createView($table, $dbSchema);
         new Msg('<a href="' . PATH . '/' . ucfirst($table) . '/lista">Teste aqui a URL.</a>');
-        $this->go('LazyInstall', 'inicio');
+        $this->go('LazyInstall/inicio');
     }
 
     private function cretateModel(string $table, array $dbSchema)
@@ -251,7 +251,7 @@ class LazyInstall extends \Lazydev\Core\Controller
             fwrite($handle, $this->nlt(3) . "if (\$this->getParam('url')) {");
             fwrite($handle, $this->nlt(4) . "\$this->goUrl(\$this->getParam('url'));");
             fwrite($handle, $this->nlt(3) . "}");
-            fwrite($handle, $this->nlt(3) . '$this->go(\'' . $table . '\', \'lista\');');
+            fwrite($handle, $this->nlt(3) . '$this->go(\'' . $table . '/lista\');');
             fwrite($handle, $this->nlt(2) . '}');
             fwrite($handle, $this->nlt(1) . "}\n");
         }
@@ -303,7 +303,27 @@ class LazyInstall extends \Lazydev\Core\Controller
             fwrite($handle, $this->nlt(1) . "# renderiza a visão /view/$model/editar.tpl");
             fwrite($handle, $this->nlt(1) . "# url: /$model/editar");
             fwrite($handle, $this->nlt(1) . 'function editar(){');
-            fwrite($handle, $this->nlt(2) . '$this->setTitle(\'Editar\');');
+            fwrite($handle, $this->nlt(2) . 'try {');
+            fwrite($handle, $this->nlt(3) . '$this->setTitle(\'Editar ' . $model . '\');');
+            fwrite($handle, $this->nlt(3) . "\$$table = new Model" . $model . '($this->getParam(0));');
+            fwrite($handle, $this->nlt(3) . '$this->set(\'' . $table . '\', $' . $table . ');');
+            $tablesfks = [];
+            foreach ($tableSchema['fields'] as $f) {
+                if ($f->fk) {
+                    $tablesfks[$f->fk] = $f->fkpk;
+                }
+            }
+            foreach ($tablesfks as $k => $f) {
+                fwrite($handle, $this->nlt(3) . '$this->set(\'' . ($k) . 's\',  ');
+                fwrite($handle, 'array_column((array)Model' . ucfirst($k) . '::getList(), \'' . $dbSchema[$k]['selected'] . '\', \'' . $f . '\'));');
+            }
+            fwrite($handle, $this->nlt(2) . '} catch (\Exception $e) {');
+            fwrite($handle, $this->nlt(3) . 'new Msg($e->getMessage(), 3);');
+            fwrite($handle, $this->nlt(3) . "if (\$this->getParam('url')) {");
+            fwrite($handle, $this->nlt(4) . "\$this->goUrl(\$this->getParam('url'));");
+            fwrite($handle, $this->nlt(3) . "}");
+            fwrite($handle, $this->nlt(3) . '$this->go(\'' . $table . '/lista\');');
+            fwrite($handle, $this->nlt(2) . '}');
             fwrite($handle, $this->nlt(1) . "}\n");
         }
 
@@ -311,7 +331,18 @@ class LazyInstall extends \Lazydev\Core\Controller
         if (filter_input(INPUT_POST, 'createeditar')) {
             fwrite($handle, $this->nlt(1) . "# Recebe os dados do formulário de editar $model e redireciona para a lista");
             fwrite($handle, $this->nlt(1) . 'function post_editar(){');
-            fwrite($handle, $this->nlt(2) . '$this->go(\'' . $model . '/lista\');');
+            fwrite($handle, $this->nlt(2) . 'try {');
+            fwrite($handle, $this->nlt(3) . "\$$table = new Model" . $model . '($this->getParam(0));');
+            fwrite($handle, $this->nlt(3) . '$this->set(\'' . $table . '\', $' . $table . ');');
+            fwrite($handle, $this->nlt(3) . '$' . $table . '->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS));');
+            fwrite($handle, $this->nlt(3) . 'new Msg("Edição realizada com sucesso.", 1);');
+            fwrite($handle, $this->nlt(3) . "if (\$this->getParam('url')) {");
+            fwrite($handle, $this->nlt(4) . "\$this->goUrl(\$this->getParam('url'));");
+            fwrite($handle, $this->nlt(3) . "}");
+            fwrite($handle, $this->nlt(3) . '$this->go(\'' . $model . '/lista\');');
+            fwrite($handle, $this->nlt(2) . '} catch (\Exception $e) {');
+            fwrite($handle, $this->nlt(3) . 'new Msg($e->getMessage(), 3);');
+            fwrite($handle, $this->nlt(2) . '}');
             fwrite($handle, $this->nlt(1) . "}\n");
         }
 
@@ -347,6 +378,9 @@ class LazyInstall extends \Lazydev\Core\Controller
         }
         if (filter_input(INPUT_POST, 'createcadastrar')) {
             $this->createViewCadastrar($table, $dbSchema);
+        }
+        if (filter_input(INPUT_POST, 'createeditar')) {
+            $this->createViewCadastrar($table, $dbSchema, 'editar');
         }
     }
 
@@ -455,7 +489,7 @@ class LazyInstall extends \Lazydev\Core\Controller
         }
     }
 
-    private function createViewCadastrar(string $table, array $dbSchema)
+    private function createViewCadastrar(string $table, array $dbSchema, $tipo = 'cadastrar')
     {
         $tableSchema = $dbSchema[$table];
         $pks = $tableSchema['pk'];
@@ -468,12 +502,12 @@ class LazyInstall extends \Lazydev\Core\Controller
         if (!is_dir('../view/' . $model)) {
             mkdir('../view/' . $model);
         }
-        $handle = fopen("../view/$model/cadastrar.tpl", 'w');
+        $handle = fopen("../view/$model/$tipo.tpl", 'w');
         if (!$handle) {
-            new Msg("Não foi possível criar view/$model/cadastrar.tpl. Verifique as permissões do diretório", 3);
+            new Msg("Não foi possível criar view/$model/$tipo.tpl. Verifique as permissões do diretório", 3);
             return;
         }
-        fwrite($handle, "<h1>Cadastrar " . $model . "</h1>");
+        fwrite($handle, "<h1>" . ucfirst($tipo) . " " . $model . "</h1>");
         fwrite($handle, $this->nlt(0) . '<form method="post">');
         foreach ($fields as $f) {
             if ($f->Extra == 'auto_increment') {
@@ -512,7 +546,7 @@ class LazyInstall extends \Lazydev\Core\Controller
                     fwrite($handle, $this->nlt(2) . '{else}');
                     fwrite($handle, $this->nlt(3) . '{assign var=checked value=\'\'}');
                     fwrite($handle, $this->nlt(2) . '{/if}');
-                    fwrite($handle, $this->nlt(2) . '<input type="checkbox" name="' . $f->Field . '" id="' . $f->Field . '" {$checked}>');
+                    fwrite($handle, $this->nlt(2) . '<input value="1" type="checkbox" name="' . $f->Field . '" id="' . $f->Field . '" {$checked}>');
                     fwrite($handle, $this->nlt(2) . "<label for=\"$f->Field\">$label</label>");
                 } elseif ($type != 'now') {
                     fwrite($handle, $this->nlt(2) . "<label for=\"$f->Field\">$label</label>");
@@ -522,7 +556,7 @@ class LazyInstall extends \Lazydev\Core\Controller
             fwrite($handle, $this->nlt(1) . '</div>');
         }
         fwrite($handle, $this->nlt(1) . '<div>');
-        fwrite($handle, $this->nlt(2) . '<input type="submit" value="cadastrar">');
+        fwrite($handle, $this->nlt(2) . '<input type="submit" value="salvar">');
         fwrite($handle, $this->nlt(1) . '</div>');
         fwrite($handle, $this->nlt(0) . '</form>');
     }

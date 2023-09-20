@@ -1,4 +1,4 @@
-<h1>Cadastrar Autor</h1>
+<h1>Editar Autor</h1>
 <form method="post">
     <div>
         <label for="nome">nome</label>

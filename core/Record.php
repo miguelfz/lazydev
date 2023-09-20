@@ -204,6 +204,9 @@ abstract class Record
         $model = '\Lazydev\Model\\' . $model;
         $atts = [];
         foreach ((array)$FK as $f) {
+            if(!$this->$f){
+                return new $model;
+            }
             $atts[]  = $this->$f;
         }
         $param = $model . implode('_', $atts);
