@@ -13,6 +13,7 @@
     scroll-behavior: smooth;
 }
 
+
 * {
     box-sizing: border-box;
 }
@@ -88,4 +89,18 @@ footer {
 
 .pagination a{
     margin:0 15px;
+}
+
+
+.lista > div, .ver > div{
+    box-sizing: border-box;
+    padding:10px;
+}
+.lista > div:hover, .ver > div:hover:not(.lista){
+    background-color:var(--secundary-color)
+}
+
+.ver .lista{
+    border:1px dotted var(--secundary-color-varation);
+    margin:15px 0;
 }

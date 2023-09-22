@@ -33,7 +33,7 @@ final class Categoria extends \Lazydev\Core\Controller{
             if ($this->getParam('url')) {
                 $this->goUrl($this->getParam('url'));
             }
-            $this->go('categoria', 'lista');
+            $this->go('categoria/lista');
         }
     }
 
@@ -48,19 +48,51 @@ final class Categoria extends \Lazydev\Core\Controller{
 
     # Recebe os dados do formulário de cadastrar Categoria e redireciona para a lista
     function post_cadastrar(){
-        $this->go('Categoria/lista');
+        $categoria = new ModelCategoria;
+        $this->set('categoria', $categoria);
+        try {
+            $categoria->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS));
+            new Msg("Cadastro realizado com sucesso.", 1);
+            if ($this->getParam('url')) {
+                $this->goUrl($this->getParam('url'));
+            }
+            $this->go('Categoria/lista');
+        } catch (\Exception $e) {
+            new Msg($e->getMessage(), 3);
+        }
     }
 
     # Editar Categoria
     # renderiza a visão /view/Categoria/editar.tpl
     # url: /Categoria/editar
     function editar(){
-        $this->setTitle('Editar');
+        try {
+            $this->setTitle('Editar Categoria');
+            $categoria = new ModelCategoria($this->getParam(0));
+            $this->set('categoria', $categoria);
+        } catch (\Exception $e) {
+            new Msg($e->getMessage(), 3);
+            if ($this->getParam('url')) {
+                $this->goUrl($this->getParam('url'));
+            }
+            $this->go('categoria/lista');
+        }
     }
 
     # Recebe os dados do formulário de editar Categoria e redireciona para a lista
     function post_editar(){
-        $this->go('Categoria/lista');
+        try {
+            $categoria = new ModelCategoria($this->getParam(0));
+            $this->set('categoria', $categoria);
+            $categoria->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS));
+            new Msg("Edição realizada com sucesso.", 1);
+            if ($this->getParam('url')) {
+                $this->goUrl($this->getParam('url'));
+            }
+            $this->go('Categoria/lista');
+        } catch (\Exception $e) {
+            new Msg($e->getMessage(), 3);
+        }
     }
 
     }

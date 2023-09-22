@@ -33,7 +33,7 @@ final class Editora extends \Lazydev\Core\Controller{
             if ($this->getParam('url')) {
                 $this->goUrl($this->getParam('url'));
             }
-            $this->go('editora', 'lista');
+            $this->go('editora/lista');
         }
     }
 
@@ -48,19 +48,51 @@ final class Editora extends \Lazydev\Core\Controller{
 
     # Recebe os dados do formulário de cadastrar Editora e redireciona para a lista
     function post_cadastrar(){
-        $this->go('Editora/lista');
+        $editora = new ModelEditora;
+        $this->set('editora', $editora);
+        try {
+            $editora->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS));
+            new Msg("Cadastro realizado com sucesso.", 1);
+            if ($this->getParam('url')) {
+                $this->goUrl($this->getParam('url'));
+            }
+            $this->go('Editora/lista');
+        } catch (\Exception $e) {
+            new Msg($e->getMessage(), 3);
+        }
     }
 
     # Editar Editora
     # renderiza a visão /view/Editora/editar.tpl
     # url: /Editora/editar
     function editar(){
-        $this->setTitle('Editar');
+        try {
+            $this->setTitle('Editar Editora');
+            $editora = new ModelEditora($this->getParam(0));
+            $this->set('editora', $editora);
+        } catch (\Exception $e) {
+            new Msg($e->getMessage(), 3);
+            if ($this->getParam('url')) {
+                $this->goUrl($this->getParam('url'));
+            }
+            $this->go('editora/lista');
+        }
     }
 
     # Recebe os dados do formulário de editar Editora e redireciona para a lista
     function post_editar(){
-        $this->go('Editora/lista');
+        try {
+            $editora = new ModelEditora($this->getParam(0));
+            $this->set('editora', $editora);
+            $editora->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS));
+            new Msg("Edição realizada com sucesso.", 1);
+            if ($this->getParam('url')) {
+                $this->goUrl($this->getParam('url'));
+            }
+            $this->go('Editora/lista');
+        } catch (\Exception $e) {
+            new Msg($e->getMessage(), 3);
+        }
     }
 
     }

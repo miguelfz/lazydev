@@ -1,5 +1,5 @@
-<h1>Cadastrar Autor</h1>
-<form method="post">
+<form method="post" class="editar autor">
+    <h1>Cadastrar Autor</h1>
     <div>
         <label for="nome">nome</label>
         <input type=text name="nome" id="nome" value="{$autor->nome}" >

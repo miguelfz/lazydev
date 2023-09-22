@@ -1,5 +1,5 @@
-<h1>Editar Livro</h1>
-<form method="post">
+<form method="post" class="editar livro">
+    <h1>Editar Livro</h1>
     <div>
         <label for="titulo">titulo</label>
         <input type=text name="titulo" id="titulo" value="{$livro->titulo}"  required>

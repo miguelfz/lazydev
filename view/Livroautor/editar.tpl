@@ -1,5 +1,5 @@
 <form method="post" class="editar livroautor">
-    <h1>Cadastrar Livroautor</h1>
+    <h1>Editar Livroautor</h1>
     <div>
         <label for="codLivro">livro</label>
         <select name="codLivro" id="codLivro">

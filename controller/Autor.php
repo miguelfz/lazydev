@@ -56,7 +56,7 @@ final class Autor extends \Lazydev\Core\Controller{
             if ($this->getParam('url')) {
                 $this->goUrl($this->getParam('url'));
             }
-        $this->go('Autor/lista');
+            $this->go('Autor/lista');
         } catch (\Exception $e) {
             new Msg($e->getMessage(), 3);
         }

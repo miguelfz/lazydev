@@ -1,5 +1,5 @@
 <form method="post" class="editar editora">
-    <h1>Cadastrar Editora</h1>
+    <h1>Editar Editora</h1>
     <div>
         <label for="nome">nome</label>
         <input type=text name="nome" id="nome" value="{$editora->nome}"  required>

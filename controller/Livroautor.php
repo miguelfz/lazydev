@@ -35,7 +35,7 @@ final class Livroautor extends \Lazydev\Core\Controller{
             if ($this->getParam('url')) {
                 $this->goUrl($this->getParam('url'));
             }
-            $this->go('livroautor', 'lista');
+            $this->go('livroautor/lista');
         }
     }
 
@@ -52,19 +52,53 @@ final class Livroautor extends \Lazydev\Core\Controller{
 
     # Recebe os dados do formulário de cadastrar Livroautor e redireciona para a lista
     function post_cadastrar(){
-        $this->go('Livroautor/lista');
+        $livroautor = new ModelLivroautor;
+        $this->set('livroautor', $livroautor);
+        try {
+            $livroautor->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS));
+            new Msg("Cadastro realizado com sucesso.", 1);
+            if ($this->getParam('url')) {
+                $this->goUrl($this->getParam('url'));
+            }
+            $this->go('Livroautor/lista');
+        } catch (\Exception $e) {
+            new Msg($e->getMessage(), 3);
+        }
     }
 
     # Editar Livroautor
     # renderiza a visão /view/Livroautor/editar.tpl
     # url: /Livroautor/editar
     function editar(){
-        $this->setTitle('Editar');
+        try {
+            $this->setTitle('Editar Livroautor');
+            $livroautor = new ModelLivroautor($this->getParam(0), $this->getParam(1));
+            $this->set('livroautor', $livroautor);
+            $this->set('livros',  array_column((array)ModelLivro::getList(), 'titulo', 'cod'));
+            $this->set('autors',  array_column((array)ModelAutor::getList(), 'nome', 'cod'));
+        } catch (\Exception $e) {
+            new Msg($e->getMessage(), 3);
+            if ($this->getParam('url')) {
+                $this->goUrl($this->getParam('url'));
+            }
+            $this->go('livroautor/lista');
+        }
     }
 
     # Recebe os dados do formulário de editar Livroautor e redireciona para a lista
     function post_editar(){
-        $this->go('Livroautor/lista');
+        try {
+            $livroautor = new ModelLivroautor($this->getParam(0), $this->getParam(1));
+            $this->set('livroautor', $livroautor);
+            $livroautor->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS));
+            new Msg("Edição realizada com sucesso.", 1);
+            if ($this->getParam('url')) {
+                $this->goUrl($this->getParam('url'));
+            }
+            $this->go('Livroautor/lista');
+        } catch (\Exception $e) {
+            new Msg($e->getMessage(), 3);
+        }
     }
 
     }

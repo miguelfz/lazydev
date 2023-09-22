@@ -60,7 +60,7 @@ final class Livro extends \Lazydev\Core\Controller{
             if ($this->getParam('url')) {
                 $this->goUrl($this->getParam('url'));
             }
-        $this->go('Livro/lista');
+            $this->go('Livro/lista');
         } catch (\Exception $e) {
             new Msg($e->getMessage(), 3);
         }

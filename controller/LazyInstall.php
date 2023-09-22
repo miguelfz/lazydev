@@ -290,7 +290,7 @@ class LazyInstall extends \Lazydev\Core\Controller
             fwrite($handle, $this->nlt(3) . "if (\$this->getParam('url')) {");
             fwrite($handle, $this->nlt(4) . "\$this->goUrl(\$this->getParam('url'));");
             fwrite($handle, $this->nlt(3) . "}");
-            fwrite($handle, $this->nlt(2) . '$this->go(\'' . $model . '/lista\');');
+            fwrite($handle, $this->nlt(3) . '$this->go(\'' . $model . '/lista\');');
             fwrite($handle, $this->nlt(2) . '} catch (\Exception $e) {');
             fwrite($handle, $this->nlt(3) . 'new Msg($e->getMessage(), 3);');
             fwrite($handle, $this->nlt(2) . '}');
@@ -305,7 +305,12 @@ class LazyInstall extends \Lazydev\Core\Controller
             fwrite($handle, $this->nlt(1) . 'function editar(){');
             fwrite($handle, $this->nlt(2) . 'try {');
             fwrite($handle, $this->nlt(3) . '$this->setTitle(\'Editar ' . $model . '\');');
-            fwrite($handle, $this->nlt(3) . "\$$table = new Model" . $model . '($this->getParam(0));');
+            $params = [];
+            $i = 0;
+            foreach ($pks as $pk) {
+                $params[] = '$this->getParam(' . $i++ . ')';
+            }
+            fwrite($handle, $this->nlt(3) . '$' . $table . ' = new Model' . $model . '(' . implode(', ', $params) . ');');
             fwrite($handle, $this->nlt(3) . '$this->set(\'' . $table . '\', $' . $table . ');');
             $tablesfks = [];
             foreach ($tableSchema['fields'] as $f) {
@@ -332,7 +337,12 @@ class LazyInstall extends \Lazydev\Core\Controller
             fwrite($handle, $this->nlt(1) . "# Recebe os dados do formulário de editar $model e redireciona para a lista");
             fwrite($handle, $this->nlt(1) . 'function post_editar(){');
             fwrite($handle, $this->nlt(2) . 'try {');
-            fwrite($handle, $this->nlt(3) . "\$$table = new Model" . $model . '($this->getParam(0));');
+            $params = [];
+            $i = 0;
+            foreach ($pks as $pk) {
+                $params[] = '$this->getParam(' . $i++ . ')';
+            }
+            fwrite($handle, $this->nlt(3) . '$' . $table . ' = new Model' . $model . '(' . implode(', ', $params) . ');');
             fwrite($handle, $this->nlt(3) . '$this->set(\'' . $table . '\', $' . $table . ');');
             fwrite($handle, $this->nlt(3) . '$' . $table . '->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS));');
             fwrite($handle, $this->nlt(3) . 'new Msg("Edição realizada com sucesso.", 1);');
@@ -402,17 +412,19 @@ class LazyInstall extends \Lazydev\Core\Controller
             new Msg("Não foi possível criar view/$model/lista.tpl. Verifique as permissões do diretório", 3);
             return;
         }
-        fwrite($handle, "<h2>" . $this->getPlural($model) . "</h2>");
-        fwrite($handle, $this->nlt(0) . "{foreach $" . $table . "s as $" . $sigla . "}");
+        fwrite($handle, '<div class="lista '.$table.'">');
+        fwrite($handle, $this->nlt(1) . "<h2>" . $this->getPlural($model) . "</h2>");
+        fwrite($handle, $this->nlt(1) . "{foreach $" . $table . "s as $" . $sigla . "}");
         $params = '';
         foreach ($pks as $pk) {
             $params .= '{$' . $sigla . '->' . $pk . '}/';
         }
-        fwrite($handle, $this->nlt(1) . '<div> <a href="{PATH}/' . "$model/ver/$params" . '">');
+        fwrite($handle, $this->nlt(2) . '<div> <a href="{PATH}/' . "$model/ver/$params" . '">');
         fwrite($handle, '{$' . $sigla . '->' . $significativo . '}</a> </div>');
-        fwrite($handle, $this->nlt(0) . "{foreachelse}");
-        fwrite($handle, $this->nlt(1) . "<p>Nada para exibir aqui.</p>");
-        fwrite($handle, $this->nlt(0) . "{/foreach}");
+        fwrite($handle, $this->nlt(1) . "{foreachelse}");
+        fwrite($handle, $this->nlt(2) . "<p>Nada para exibir aqui.</p>");
+        fwrite($handle, $this->nlt(1) . "{/foreach}");
+        fwrite($handle, $this->nlt(0) . '</div>');
     }
 
     private function createViewVer(string $table, array $dbSchema)
@@ -432,20 +444,21 @@ class LazyInstall extends \Lazydev\Core\Controller
         if (!$handle) {
             new Msg("Não foi possível criar view/$model/ver.tpl. Verifique as permissões do diretório", 3);
             return;
-        }
-        fwrite($handle, '<h1>{$' . $table . '->' . $significativo . '}</h1>' . "\n");
+        }     
+        fwrite($handle, '<div class="ver '.$table.'">');
+        fwrite($handle, $this->nlt(1) .'<h1>{$' . $table . '->' . $significativo . '}</h1>' . "\n");   
         foreach ($fields as $f) {
             if (!filter_input(INPUT_POST, 'ver_' . $f->Field) || $f->Field == $significativo || $f->fk != 0) {
                 continue;
             }
-            fwrite($handle, $this->nlt(0) . '<div>' . $f->Field . ': {$' . $table . '->' . $f->Field . '}</div>');
+            fwrite($handle, $this->nlt(1) . '<div>' . $f->Field . ': {$' . $table . '->' . $f->Field . '}</div>');
         }
         foreach ($fks as $fk) {
             if (!filter_input(INPUT_POST, 'ver_' . $fk->fk)) {
                 continue;
             }
             $field = filter_input(INPUT_POST, 'verRef_' . $table . '_' . $fk->fk);
-            fwrite($handle, $this->nlt(0) . '<div>');
+            fwrite($handle, $this->nlt(1) . '<div>');
             fwrite($handle, $fk->reftable . ': ');
             fwrite($handle, '<a href="{PATH}/' . ucfirst($fk->reftable) . '/ver/{$' . $table . '->get' . ucfirst($fk->reftable) . '()->' . $fk->refpk . '}">');
             fwrite($handle, '{$' . $table . '->get' . ucfirst($fk->reftable) . '()->' . $field . '}');
@@ -455,9 +468,9 @@ class LazyInstall extends \Lazydev\Core\Controller
         foreach ($dbSchema as $k => $v) {
             foreach ($v['fk'] as $fk) {
                 if ($fk->reftable == $table && filter_input(INPUT_POST, 'verLista_' . $fk->table . '_' . $fk->fk)) {
-                    fwrite($handle, $this->nlt(0));
-                    fwrite($handle, $this->nlt(0) . '{* lista de ' . $fk->table . '*}');
-                    fwrite($handle, $this->nlt(0) . '{include file=\'../' . ucfirst($fk->table) . '/lista.tpl\'}');
+                    fwrite($handle, $this->nlt(1));
+                    fwrite($handle, $this->nlt(1) . '{* lista de ' . $fk->table . '*}');
+                    fwrite($handle, $this->nlt(1) . '{include file=\'../' . ucfirst($fk->table) . '/lista.tpl\'}');
                 }
             }
         }
@@ -469,9 +482,9 @@ class LazyInstall extends \Lazydev\Core\Controller
                     continue;
                 }
                 if ($ffk && filter_input(INPUT_POST, 'verListaNN_' . $fk->reftable . 's' . $fk->used)) {
-                    fwrite($handle, $this->nlt(0));
-                    fwrite($handle, $this->nlt(0) . '{* lista de ' . $fk->reftable . '*}');
-                    fwrite($handle, $this->nlt(0) . '{include file=\'../' . ucfirst($fk->reftable) . '/lista.tpl\'}');
+                    fwrite($handle, $this->nlt(1));
+                    fwrite($handle, $this->nlt(1) . '{* lista de ' . $fk->reftable . '*}');
+                    fwrite($handle, $this->nlt(1) . '{include file=\'../' . ucfirst($fk->reftable) . '/lista.tpl\'}');
                 }
             }
             $ffk = '';
@@ -481,12 +494,13 @@ class LazyInstall extends \Lazydev\Core\Controller
                     continue;
                 }
                 if ($ffk && filter_input(INPUT_POST, 'verListaNN_' . $fk->reftable . 's' . $fk->used)) {
-                    fwrite($handle, $this->nlt(0));
-                    fwrite($handle, $this->nlt(0) . '{* lista de ' . $fk->reftable . '*}');
-                    fwrite($handle, $this->nlt(0) . '{include file=\'../' . ucfirst($fk->reftable) . '/lista.tpl\'}');
+                    fwrite($handle, $this->nlt(1));
+                    fwrite($handle, $this->nlt(1) . '{* lista de ' . $fk->reftable . '*}');
+                    fwrite($handle, $this->nlt(1) . '{include file=\'../' . ucfirst($fk->reftable) . '/lista.tpl\'}');
                 }
             }
-        }
+        }              
+        fwrite($handle, $this->nlt(0) .'</div>');
     }
 
     private function createViewCadastrar(string $table, array $dbSchema, $tipo = 'cadastrar')
@@ -507,8 +521,8 @@ class LazyInstall extends \Lazydev\Core\Controller
             new Msg("Não foi possível criar view/$model/$tipo.tpl. Verifique as permissões do diretório", 3);
             return;
         }
-        fwrite($handle, "<h1>" . ucfirst($tipo) . " " . $model . "</h1>");
-        fwrite($handle, $this->nlt(0) . '<form method="post">');
+        fwrite($handle, '<form method="post" class="editar '.$table.'">');
+        fwrite($handle, $this->nlt(1) . "<h1>" . ucfirst($tipo) . " " . $model . "</h1>");
         foreach ($fields as $f) {
             if ($f->Extra == 'auto_increment') {
                 continue;

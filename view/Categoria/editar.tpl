@@ -1,5 +1,5 @@
 <form method="post" class="editar categoria">
-    <h1>Cadastrar Categoria</h1>
+    <h1>Editar Categoria</h1>
     <div>
         <label for="nome">nome</label>
         <input type=text name="nome" id="nome" value="{$categoria->nome}"  required>

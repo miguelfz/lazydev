@@ -32,7 +32,7 @@ final class Teste extends \Lazydev\Core\Controller{
             if ($this->getParam('url')) {
                 $this->goUrl($this->getParam('url'));
             }
-            $this->go('teste', 'lista');
+            $this->go('teste/lista');
         }
     }
 
@@ -48,19 +48,52 @@ final class Teste extends \Lazydev\Core\Controller{
 
     # Recebe os dados do formulário de cadastrar Teste e redireciona para a lista
     function post_cadastrar(){
-        $this->go('Teste/lista');
+        $teste = new ModelTeste;
+        $this->set('teste', $teste);
+        try {
+            $teste->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS));
+            new Msg("Cadastro realizado com sucesso.", 1);
+            if ($this->getParam('url')) {
+                $this->goUrl($this->getParam('url'));
+            }
+            $this->go('Teste/lista');
+        } catch (\Exception $e) {
+            new Msg($e->getMessage(), 3);
+        }
     }
 
     # Editar Teste
     # renderiza a visão /view/Teste/editar.tpl
     # url: /Teste/editar
     function editar(){
-        $this->setTitle('Editar');
+        try {
+            $this->setTitle('Editar Teste');
+            $teste = new ModelTeste($this->getParam(0));
+            $this->set('teste', $teste);
+            $this->set('livroautors',  array_column((array)ModelLivroautor::getList(), 'codLivro', 'codAutor'));
+        } catch (\Exception $e) {
+            new Msg($e->getMessage(), 3);
+            if ($this->getParam('url')) {
+                $this->goUrl($this->getParam('url'));
+            }
+            $this->go('teste/lista');
+        }
     }
 
     # Recebe os dados do formulário de editar Teste e redireciona para a lista
     function post_editar(){
-        $this->go('Teste/lista');
+        try {
+            $teste = new ModelTeste($this->getParam(0));
+            $this->set('teste', $teste);
+            $teste->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS));
+            new Msg("Edição realizada com sucesso.", 1);
+            if ($this->getParam('url')) {
+                $this->goUrl($this->getParam('url'));
+            }
+            $this->go('Teste/lista');
+        } catch (\Exception $e) {
+            new Msg($e->getMessage(), 3);
+        }
     }
 
     }
