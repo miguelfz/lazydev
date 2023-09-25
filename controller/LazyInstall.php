@@ -55,6 +55,38 @@ class LazyInstall extends \Lazydev\Core\Controller
         $this->go('LazyInstall/inicio');
     }
 
+    public function menu()
+    {
+        $this->setTitle('Menu de navegação');
+        if (!\Lazydev\Core\Config::get('db_name')) {
+            new Msg('Banco de dados não especificado no arquivo de configuração', 3);
+        }
+        $tables = $this->getTables();
+        $menu = [];
+        foreach ($tables as $t) {
+            $class = ucfirst($t->name);
+            if (file_exists(__DIR__ . '/../controller/' . $class . '.php')) {
+                $class_methods = get_class_methods('\Lazydev\Controller\\' . $class);
+                if (in_array('lista', $class_methods)) {
+                    $menu[] = $class;
+                }
+            }
+        }
+        $this->set('menu', $menu);
+    }
+
+    public function post_menu()
+    {
+        $handle = fopen("../template/menu.php", 'w');
+        $menus = filter_input(INPUT_POST, 'menu',FILTER_DEFAULT, FILTER_FORCE_ARRAY);
+        foreach ($menus as $m) {
+            fwrite($handle, $this->nlt(0).'<a href="<?=PATH?>/'.$m.'/lista">'.$m.'</a>');
+        }
+        fclose($handle);
+        $this->go('LazyInstall');
+    }
+
+
     private function cretateModel(string $table, array $dbSchema)
     {
         $tableSchema = $dbSchema[$table];
@@ -151,8 +183,6 @@ class LazyInstall extends \Lazydev\Core\Controller
                 }
             }
         }
-
-
         # fim da classe        
         fwrite($handle, $this->nlt(0) . "}");
         fclose($handle);
@@ -373,9 +403,8 @@ class LazyInstall extends \Lazydev\Core\Controller
             fwrite($handle, $this->nlt(2) . '$this->go(\'' . $model . '/lista\');');
             fwrite($handle, $this->nlt(1) . "}\n");
         }
-
-
         fwrite($handle, $this->nlt(1) . "}");
+        fclose($handle);
     }
 
     private function createView(string $table, array $dbSchema)
@@ -412,7 +441,7 @@ class LazyInstall extends \Lazydev\Core\Controller
             new Msg("Não foi possível criar view/$model/lista.tpl. Verifique as permissões do diretório", 3);
             return;
         }
-        fwrite($handle, '<div class="lista '.$table.'">');
+        fwrite($handle, '<div class="lista ' . $table . '">');
         fwrite($handle, $this->nlt(1) . "<h2>" . $this->getPlural($model) . "</h2>");
         fwrite($handle, $this->nlt(1) . "{foreach $" . $table . "s as $" . $sigla . "}");
         $params = '';
@@ -425,6 +454,7 @@ class LazyInstall extends \Lazydev\Core\Controller
         fwrite($handle, $this->nlt(2) . "<p>Nada para exibir aqui.</p>");
         fwrite($handle, $this->nlt(1) . "{/foreach}");
         fwrite($handle, $this->nlt(0) . '</div>');
+        fclose($handle);
     }
 
     private function createViewVer(string $table, array $dbSchema)
@@ -444,9 +474,9 @@ class LazyInstall extends \Lazydev\Core\Controller
         if (!$handle) {
             new Msg("Não foi possível criar view/$model/ver.tpl. Verifique as permissões do diretório", 3);
             return;
-        }     
-        fwrite($handle, '<div class="ver '.$table.'">');
-        fwrite($handle, $this->nlt(1) .'<h1>{$' . $table . '->' . $significativo . '}</h1>' . "\n");   
+        }
+        fwrite($handle, '<div class="ver ' . $table . '">');
+        fwrite($handle, $this->nlt(1) . '<h1>{$' . $table . '->' . $significativo . '}</h1>' . "\n");
         foreach ($fields as $f) {
             if (!filter_input(INPUT_POST, 'ver_' . $f->Field) || $f->Field == $significativo || $f->fk != 0) {
                 continue;
@@ -499,8 +529,9 @@ class LazyInstall extends \Lazydev\Core\Controller
                     fwrite($handle, $this->nlt(1) . '{include file=\'../' . ucfirst($fk->reftable) . '/lista.tpl\'}');
                 }
             }
-        }              
-        fwrite($handle, $this->nlt(0) .'</div>');
+        }
+        fwrite($handle, $this->nlt(0) . '</div>');
+        fclose($handle);
     }
 
     private function createViewCadastrar(string $table, array $dbSchema, $tipo = 'cadastrar')
@@ -521,7 +552,7 @@ class LazyInstall extends \Lazydev\Core\Controller
             new Msg("Não foi possível criar view/$model/$tipo.tpl. Verifique as permissões do diretório", 3);
             return;
         }
-        fwrite($handle, '<form method="post" class="editar '.$table.'">');
+        fwrite($handle, '<form method="post" class="editar ' . $table . '">');
         fwrite($handle, $this->nlt(1) . "<h1>" . ucfirst($tipo) . " " . $model . "</h1>");
         foreach ($fields as $f) {
             if ($f->Extra == 'auto_increment') {
@@ -573,6 +604,7 @@ class LazyInstall extends \Lazydev\Core\Controller
         fwrite($handle, $this->nlt(2) . '<input type="submit" value="salvar">');
         fwrite($handle, $this->nlt(1) . '</div>');
         fwrite($handle, $this->nlt(0) . '</form>');
+        fclose($handle);
     }
 
     private function getLazyJson()

@@ -15,10 +15,13 @@
 <div class="">
     {foreach $tables as $t}
         <div style="padding:10px; border:1px dotted #CCC;">
-            <h3><a href="{PATH}/LazyInstall/table/{$t->name}">{$t->name}</a></h3>            
+            <h3><a href="{PATH}/LazyInstall/table/{$t->name}">{$t->name}</a></h3>
         </div>
     {foreachelse}
         <p>Nenhuma tabela encontrada. Verifique o arquivo /config</p>
     {/foreach}
+    <div style="padding:10px; border:1px dotted #CCC;">
+        <h3><a href="{PATH}/LazyInstall/menu">Menu de navegação</a></h3>
+    </div>
 </div>
 <hr>
