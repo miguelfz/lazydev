@@ -17,7 +17,7 @@ Config::set('db_user', 'root');
 Config::set('db_password', '');
 # nome do banco de dados:
 
-Config::set('db_name', 'biblioteca');
+Config::set('db_name', 'filmes');
 
 
 ##################################

@@ -33,7 +33,7 @@
             <label for="createeditar">/View/{$tableSchema['name']|capitalize}/editar.tpl</label>
         </div>
         <div style="margin: 15px;">
-            <input type="checkbox" name="createapagar" id="createexcluir" checked>
+            <input type="checkbox" name="createexcluir" id="createexcluir" checked>
             <label for="createexcluir">/View/{$tableSchema['name']|capitalize}/excluir.tpl</label>
         </div>
     </div>

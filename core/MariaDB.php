@@ -94,13 +94,13 @@ final class MariaDB
         $d = debug_backtrace();
         $files = '';
         foreach ($d as $value) {
-            if (isset($value['class'])){
+            if (isset($value['class'])) {
                 $files .= '<br>' . $value['class'] . $value['type'] . $value['function'] . '()';
             }
         }
         $query = htmlentities($this->pdo_sql_debug($this->query));
         new Msg('<strong>Query ' . self::$queryCounter++ . ':</strong><br>' . $query . '<br>' . $files, 5);
-                
+
         try {
             return $this->stmt->execute();
         } catch (PDOException $p) {
@@ -114,7 +114,7 @@ final class MariaDB
         }
     }
 
-    public function getResults($class = NULL)
+    public function getResults(string $class = NULL)
     {
         $this->execute();
         if ($class) {
@@ -131,7 +131,7 @@ final class MariaDB
         return $rs;
     }
 
-    public function getRow($class = NULL)
+    public function getRow(string $class = NULL)
     {
         if ($class) {
             $this->stmt->setFetchMode(PDO::FETCH_CLASS, $class);
@@ -167,7 +167,8 @@ final class MariaDB
     {
         return $this->dbh->rollBack();
     }
-    private function pdo_sql_debug($sql) {
+    private function pdo_sql_debug($sql)
+    {
         foreach ($this->placeholders as $k => $v) {
             $sql = str_replace($k, strval($v), $sql);
         }

@@ -78,9 +78,9 @@ class LazyInstall extends \Lazydev\Core\Controller
     public function post_menu()
     {
         $handle = fopen("../template/menu.php", 'w');
-        $menus = filter_input(INPUT_POST, 'menu',FILTER_DEFAULT, FILTER_FORCE_ARRAY);
+        $menus = filter_input(INPUT_POST, 'menu', FILTER_DEFAULT, FILTER_FORCE_ARRAY);
         foreach ($menus as $m) {
-            fwrite($handle, $this->nlt(0).'<a href="<?=PATH?>/'.$m.'/lista">'.$m.'</a>');
+            fwrite($handle, $this->nlt(0) . '<a href="<?=PATH?>/' . $m . '/lista">' . $m . '</a>');
         }
         fclose($handle);
         $this->go('LazyInstall');
@@ -366,6 +366,7 @@ class LazyInstall extends \Lazydev\Core\Controller
         if (filter_input(INPUT_POST, 'createeditar')) {
             fwrite($handle, $this->nlt(1) . "# Recebe os dados do formulário de editar $model e redireciona para a lista");
             fwrite($handle, $this->nlt(1) . 'function post_editar(){');
+            fwrite($handle, $this->nlt(3) . '$this->setTitle(\'Editar ' . $model . '\');');
             fwrite($handle, $this->nlt(2) . 'try {');
             $params = [];
             $i = 0;
@@ -392,7 +393,23 @@ class LazyInstall extends \Lazydev\Core\Controller
             fwrite($handle, $this->nlt(1) . "# renderiza a visão /view/$model/excluir.tpl");
             fwrite($handle, $this->nlt(1) . "# url: /$model/excluir");
             fwrite($handle, $this->nlt(1) . 'function excluir(){');
-            fwrite($handle, $this->nlt(2) . '$this->setTitle(\'Excluir\');');
+            fwrite($handle, $this->nlt(3) . '$this->setTitle(\'Excluir ' . $model . '\');');
+            fwrite($handle, $this->nlt(2) . 'try {');
+            $params = [];
+            $i = 0;
+            foreach ($pks as $pk) {
+                $params[] = '$this->getParam(' . $i++ . ')';
+            }
+            fwrite($handle, $this->nlt(3) . '$' . $table . ' = new Model' . $model . '(' . implode(', ', $params) . ');');
+            fwrite($handle, $this->nlt(3) . '$this->set(\'' . $table . '\', $' . $table . ');');
+            fwrite($handle, $this->nlt(3) . 'new Msg("Exclusão realizada com sucesso.", 1);');
+            fwrite($handle, $this->nlt(2) . '} catch (\Exception $e) {');
+            fwrite($handle, $this->nlt(3) . 'new Msg($e->getMessage(), 3);');
+            fwrite($handle, $this->nlt(3) . "if (\$this->getParam('url')) {");
+            fwrite($handle, $this->nlt(4) . "\$this->goUrl(\$this->getParam('url'));");
+            fwrite($handle, $this->nlt(3) . "}");
+            fwrite($handle, $this->nlt(3) . '$this->go(\'' . $model . '/lista\');');
+            fwrite($handle, $this->nlt(2) . '}');
             fwrite($handle, $this->nlt(1) . "}\n");
         }
 

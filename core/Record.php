@@ -7,7 +7,7 @@ abstract class Record
 
     const TABLE = '';
     const PK = [];
-    private $vars = [];
+    protected $lazyobjectvars = [];
 
     /**
      * Instancia um novo objeto do Modelo ou busca uma instancia 
@@ -37,13 +37,13 @@ abstract class Record
 
     public function __set(string $varname, mixed $value)
     {
-        $this->vars[$varname] = $value;
+        $this->lazyobjectvars[$varname] = $value;
     }
 
     public function __get(string $varname)
     {
-        if (array_key_exists($varname, $this->vars)) {
-            return $this->vars[$varname];
+        if (array_key_exists($varname, $this->lazyobjectvars)) {
+            return $this->lazyobjectvars[$varname];
         }
         return null;
     }
@@ -52,7 +52,7 @@ abstract class Record
      * Aplica filtros ao valores dos atriburos de SQL Injection e XSS attack
      */
     public function sanitize()
-    {        
+    {
         // TODO
     }
 
@@ -204,7 +204,7 @@ abstract class Record
         $model = '\Lazydev\Model\\' . $model;
         $atts = [];
         foreach ((array)$FK as $f) {
-            if(!$this->$f){
+            if (!$this->$f) {
                 return new $model;
             }
             $atts[]  = $this->$f;
@@ -242,10 +242,10 @@ abstract class Record
      * @throws Exception
      */
     public function save(?array $data)
-    {
+    {        
         $this->sanitize();
         $db = new MariaDB();
-        $pk = $this::PK;
+        $pk = (array)$this::PK;
         $table = $this::TABLE;
         $atts = [];
         $tabledesc = $this->getTableDescription($table);
@@ -254,12 +254,12 @@ abstract class Record
                 $this->$key = $value;
             }
         }
+        if (!$this->lazyobjectsavedondatabase) { #salva
+            foreach ($tabledesc as $t) {
+                $field = $t->Field;
+                if (isset($this->$field) && trim($this->$field) == '')
+                    $this->$field = NULL;
 
-        if (empty($this->$pk)) {
-            foreach ($tabledesc as $field) {
-                if (isset($this->$field))
-                    if (trim($this->$field) == '')
-                        $this->$field = NULL;
                 $atts[$field] = $this->$field;
             }
             $q = "INSERT INTO $table (" . implode(',', array_keys($atts)) . ") VALUES (:" . implode(',:', array_keys($atts)) . ")";
@@ -268,14 +268,20 @@ abstract class Record
                 $db->bind(':' . $key, $value);
             }
             $result = $db->execute();
-            $id = $db->lastInsertId();
             if (!$result) {
-                throw new \Exception('Preencha todos os campo obrigatórios.', 2);
+                throw new \Exception($db->errorMsg);
+                return $result;
             }
-            $this->$pk = $id;
+            foreach ($tabledesc as $t) {
+                $field = $t->Field;
+                if (empty($this->$field) && $t->Extra == 'auto_increment')
+                    $this->$field = $db->lastInsertId();
+            }
+            $this->lazyobjectsavedondatabase = true;
             return $result;
-        } else {
-            foreach ($tabledesc as $field) {
+        } else { # edita
+            foreach ($tabledesc as $t) {
+                $field = $t->Field;
                 if (isset($this->$field))
                     if (trim($this->$field) == '' || trim($this->$field) == NULL)
                         $this->$field = NULL;
@@ -283,7 +289,12 @@ abstract class Record
                 $fields[] = $field . '=:' . $field;
             }
             $q = "UPDATE $table SET " . implode(',', $fields);
-            $q .= " WHERE $pk = :$pk";
+            $q .= " WHERE ";
+            $pks = [];
+            foreach ($pk as $p) {
+                $pks[] = "$p = :$p";
+            }
+            $q .= implode(' AND ', $pks);
             $db->query($q);
             foreach ($atts as $key => $value) {
                 $db->bind(':' . $key, $value);
@@ -311,6 +322,7 @@ abstract class Record
         foreach ($data as $key => $value) {
             $this->$key = $data->$key;
         }
+        $this->lazyobjectsavedondatabase = true;
         return true;
     }
 
@@ -337,6 +349,9 @@ abstract class Record
         $result = $db->execute();
         if (!$result) {
             throw new \Exception($db->errorMsg, 3);
+        }
+        else{
+            $this->lazyobjectsavedondatabase = false;
         }
         return $result;
     }
@@ -431,7 +446,7 @@ abstract class Record
      * @param Criteria $criteria
      * @return object 
      */
-    public static function getFirst(?Criteria $criteria)
+    public static function getFirst(Criteria $criteria = NULL)
     {
         $db = new MariaDB();
         $class = get_called_class();
@@ -476,7 +491,9 @@ abstract class Record
         foreach ($criteria->getConditions() as $c) {
             $db->bind(':' . $c[3], $c[2]);
         }
-        return $db->getRow($class);
+        $obj =  $db->getRow($class);
+        $obj->lazyobjectsavedondatabase = true;
+        return $obj;
     }
 
     /**
@@ -546,12 +563,7 @@ abstract class Record
     {
         $db = new MariaDB();
         $db->query("DESCRIBE $tablename");
-        $r = $db->getResults();
-        $desc = array();
-        foreach ($r as $rvalue) {
-            $desc[] = $rvalue->Field;
-        }
-        return $desc;
+        return $db->getResults();
     }
 
     /**

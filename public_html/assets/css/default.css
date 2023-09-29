@@ -7,8 +7,8 @@
     --black: #000;
     --primary-color: #1b263b;
     --secundary-color: #e0e1dd;
-    --secundary-color-varation:#778da9;
-    --link-color:#d90429;
+    --secundary-color-varation:#8ea5c3;
+    --link-color:#700416;
     --link-active-color:#ef233c;
     scroll-behavior: smooth;
 }
@@ -27,6 +27,7 @@ body {
 a:any-link{
     color: var(--link-color);
     text-decoration: none;
+    font-size: 1.2em;
 }
 
 a.active{
