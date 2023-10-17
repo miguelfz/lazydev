@@ -1,4 +1,4 @@
-<form method="post" class="editar elenco">
+<form method="post" class="cadastrar elenco">
     <h1>Cadastrar Elenco</h1>
     <div>
         <label for="cod_filme">filmes</label>

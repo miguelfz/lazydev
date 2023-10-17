@@ -1,4 +1,4 @@
-<form method="post" class="editar diretores">
+<form method="post" class="cadastrar diretores">
     <h1>Cadastrar Diretores</h1>
     <div>
         <label for="nome_diretor">Nome</label>

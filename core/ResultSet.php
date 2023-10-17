@@ -10,9 +10,6 @@ class ResultSet extends \ArrayObject
 
     function __construct(array $array)
     {
-        array_walk($array, function ($v) {
-            $v->lazyobjectsavedondatabase = true;
-        });
         parent::__construct($array);
     }
 

@@ -25,6 +25,7 @@ final class Atores extends \Lazydev\Core\Controller{
         try {
             $atores = new ModelAtores($this->getParam(0));
             $this->set('atores', $atores);
+            $this->set('elencos', $atores->getElencos());
             $this->set('filmess', $atores->getFilmess());
             $this->setTitle($atores->nome_ator);
         } catch (\Exception $e) {
@@ -50,7 +51,7 @@ final class Atores extends \Lazydev\Core\Controller{
         $atores = new ModelAtores;
         $this->set('atores', $atores);
         try {
-            $atores->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS));
+            $atores->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS), true);
             new Msg("Cadastro realizado com sucesso.", 1);
             if ($this->getParam('url')) {
                 $this->goUrl($this->getParam('url'));
@@ -103,7 +104,6 @@ final class Atores extends \Lazydev\Core\Controller{
         try {
             $atores = new ModelAtores($this->getParam(0));
             $this->set('atores', $atores);
-            new Msg("Exclusão realizada com sucesso.", 1);
         } catch (\Exception $e) {
             new Msg($e->getMessage(), 3);
             if ($this->getParam('url')) {
@@ -115,7 +115,17 @@ final class Atores extends \Lazydev\Core\Controller{
 
     # Recebe o id via post e exclui Atores
     function post_excluir(){
-        $this->go('Atores/lista');
+        try {
+            $atores = new ModelAtores($this->getParam(0));
+            $atores->delete();
+            new Msg("Exclusão realizada com sucesso.", 1);
+            if ($this->getParam('url')) {
+                $this->goUrl($this->getParam('url'));
+            }
+            $this->go('Atores/lista');
+        } catch (\Exception $e) {
+            new Msg($e->getMessage(), 3);
+        }
     }
 
     }

@@ -13,7 +13,7 @@
         <input type=number name="duracao" id="duracao" value="{$filmes->duracao}" >
     </div>
     <div>
-        <label for="ano_lancamento">Ano</label>
+        <label for="ano_lancamento">Ano Lançamento</label>
         <input type=text name="ano_lancamento" id="ano_lancamento" value="{$filmes->ano_lancamento}"  required>
     </div>
     <div>
@@ -25,10 +25,9 @@
     </div>
     <div>
         <label for="cod_genero">Gênero</label>
-        <select name="cod_genero" id="cod_genero">
-            <option></option>
-            {html_options options=$geneross selected=$filmes->cod_genero}
-        </select>
+        <div>
+            {html_radios  name='cod_genero' options=$geneross selected=$filmes->cod_genero separator='<br>'}
+        </div>
     </div>
     <div>
         <input type="submit" value="salvar">

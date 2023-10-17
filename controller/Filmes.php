@@ -15,7 +15,7 @@ final class Filmes extends \Lazydev\Core\Controller{
     function lista(){
         $this->setTitle('Lista');
         $c = new Criteria();
-        $c->setOrder('titulo');
+        $c->setOrder('titulo_original');
         $filmess=ModelFilmes::getList($c);
         $this->set('filmess', $filmess);
     }
@@ -27,8 +27,9 @@ final class Filmes extends \Lazydev\Core\Controller{
         try {
             $filmes = new ModelFilmes($this->getParam(0));
             $this->set('filmes', $filmes);
+            $this->set('elencos', $filmes->getElencos());
             $this->set('atoress', $filmes->getAtoress());
-            $this->setTitle($filmes->titulo);
+            $this->setTitle($filmes->titulo_original);
         } catch (\Exception $e) {
             new Msg($e->getMessage(), 2);
             if ($this->getParam('url')) {
@@ -54,7 +55,7 @@ final class Filmes extends \Lazydev\Core\Controller{
         $filmes = new ModelFilmes;
         $this->set('filmes', $filmes);
         try {
-            $filmes->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS));
+            $filmes->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS), true);
             new Msg("Cadastro realizado com sucesso.", 1);
             if ($this->getParam('url')) {
                 $this->goUrl($this->getParam('url'));

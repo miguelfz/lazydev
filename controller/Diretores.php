@@ -26,7 +26,6 @@ final class Diretores extends \Lazydev\Core\Controller{
             $diretores = new ModelDiretores($this->getParam(0));
             $this->set('diretores', $diretores);
             $this->set('filmess', $diretores->getFilmess());
-            $this->set('geneross', $diretores->getGeneross());
             $this->setTitle($diretores->nome_diretor);
         } catch (\Exception $e) {
             new Msg($e->getMessage(), 2);
@@ -51,7 +50,7 @@ final class Diretores extends \Lazydev\Core\Controller{
         $diretores = new ModelDiretores;
         $this->set('diretores', $diretores);
         try {
-            $diretores->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS));
+            $diretores->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS), true);
             new Msg("Cadastro realizado com sucesso.", 1);
             if ($this->getParam('url')) {
                 $this->goUrl($this->getParam('url'));
@@ -104,7 +103,6 @@ final class Diretores extends \Lazydev\Core\Controller{
         try {
             $diretores = new ModelDiretores($this->getParam(0));
             $this->set('diretores', $diretores);
-            new Msg("Exclusão realizada com sucesso.", 1);
         } catch (\Exception $e) {
             new Msg($e->getMessage(), 3);
             if ($this->getParam('url')) {
@@ -116,7 +114,17 @@ final class Diretores extends \Lazydev\Core\Controller{
 
     # Recebe o id via post e exclui Diretores
     function post_excluir(){
-        $this->go('Diretores/lista');
+        try {
+            $diretores = new ModelDiretores($this->getParam(0));
+            $diretores->delete();
+            new Msg("Exclusão realizada com sucesso.", 1);
+            if ($this->getParam('url')) {
+                $this->goUrl($this->getParam('url'));
+            }
+            $this->go('Diretores/lista');
+        } catch (\Exception $e) {
+            new Msg($e->getMessage(), 3);
+        }
     }
 
     }

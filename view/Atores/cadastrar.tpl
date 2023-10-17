@@ -1,4 +1,4 @@
-<form method="post" class="editar atores">
+<form method="post" class="cadastrar atores">
     <h1>Cadastrar Atores</h1>
     <div>
         <label for="nome_ator">nome_ator</label>

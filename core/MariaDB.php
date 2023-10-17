@@ -91,18 +91,20 @@ final class MariaDB
 
     public function execute()
     {
-        $d = debug_backtrace();
-        $files = '';
-        foreach ($d as $value) {
-            if (isset($value['class'])) {
-                $files .= '<br>' . $value['class'] . $value['type'] . $value['function'] . '()';
-            }
-        }
-        $query = htmlentities($this->pdo_sql_debug($this->query));
-        new Msg('<strong>Query ' . self::$queryCounter++ . ':</strong><br>' . $query . '<br>' . $files, 5);
+
 
         try {
-            return $this->stmt->execute();
+            $r = $this->stmt->execute();
+            $d = debug_backtrace();
+            $files = '<br>Linhas: ' . $this->rowCount();
+            foreach ($d as $value) {
+                if (isset($value['class'])) {
+                    $files .= '<br>' . $value['class'] . $value['type'] . $value['function'] . '()';
+                }
+            }
+            $query = htmlentities($this->pdo_sql_debug($this->query));
+            new Msg('<strong>Query ' . self::$queryCounter++ . ':</strong><br>' . $query . '<br>' . $files, 5);
+            return $r;
         } catch (PDOException $p) {
             $this->errorMsg = $p->getMessage();
             file_put_contents(

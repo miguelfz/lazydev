@@ -18,7 +18,6 @@ class Controller
      */
     public function beforeRun()
     {
-        $this->set('html', new Html());
         # segurança da página quando ativado o ACL no config
         if (!Acl::check(CONTROLLER, ACTION, Session::get(Acl::$loggedSession))) {
             if ($this->getParam('url_origem')) {
@@ -58,12 +57,12 @@ class Controller
      * @param String $varname
      * @param Mixed $value
      */
-    protected function set(string $varname, mixed $value)
+    protected function set(string $varname, $value)
     {
         $this->vars[$varname] = $value;
     }
 
-    public function __set(string $varname, mixed $value)
+    public function __set(string $varname, $value)
     {
         $this->vars[$varname] = $value;
     }

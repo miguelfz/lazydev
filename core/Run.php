@@ -14,6 +14,7 @@ class Run
         require  __DIR__ . '/../config.php';
         session_start();
         define('PATH', preg_replace('/\\\\|\/$/', '', dirname($_SERVER["SCRIPT_NAME"])));
+        define('URL',(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]");
         $url = preg_replace('/\/$/', '', filter_input(INPUT_GET, '_url', FILTER_SANITIZE_URL));;
         $this->urlArr = $url ? explode("/", $url) : [];
         $this->params = count($this->urlArr);

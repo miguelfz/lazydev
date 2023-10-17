@@ -35,6 +35,20 @@ a.active{
     color: var(--link-acetive-color);
     text-decoration: underline;
 }
+a.excluir, a.editar{
+    float:right;
+    padding-left: 10px;
+    display: none;
+}
+
+a.cadastrar{
+    color:var(--primary-color);
+    border-bottom: 1px solid var(--secundary-color);
+}
+
+.item:hover a.excluir,.item:hover a.editar{
+    display: inline;
+}
 
 .container {
     background-color: var(--white);
@@ -101,7 +115,8 @@ footer {
     background-color:var(--secundary-color)
 }
 
-.ver .lista{
+.ver div.lista{
     border:1px dotted var(--secundary-color-varation);
     margin:15px 0;
+    padding:15px;
 }

@@ -315,7 +315,7 @@ class LazyInstall extends \Lazydev\Core\Controller
             fwrite($handle, $this->nlt(2) . "\$$table = new Model" . $model . ';');
             fwrite($handle, $this->nlt(2) . '$this->set(\'' . $table . '\', $' . $table . ');');
             fwrite($handle, $this->nlt(2) . 'try {');
-            fwrite($handle, $this->nlt(3) . '$' . $table . '->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS));');
+            fwrite($handle, $this->nlt(3) . '$' . $table . '->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS), true);');
             fwrite($handle, $this->nlt(3) . 'new Msg("Cadastro realizado com sucesso.", 1);');
             fwrite($handle, $this->nlt(3) . "if (\$this->getParam('url')) {");
             fwrite($handle, $this->nlt(4) . "\$this->goUrl(\$this->getParam('url'));");
@@ -402,7 +402,6 @@ class LazyInstall extends \Lazydev\Core\Controller
             }
             fwrite($handle, $this->nlt(3) . '$' . $table . ' = new Model' . $model . '(' . implode(', ', $params) . ');');
             fwrite($handle, $this->nlt(3) . '$this->set(\'' . $table . '\', $' . $table . ');');
-            fwrite($handle, $this->nlt(3) . 'new Msg("Exclusão realizada com sucesso.", 1);');
             fwrite($handle, $this->nlt(2) . '} catch (\Exception $e) {');
             fwrite($handle, $this->nlt(3) . 'new Msg($e->getMessage(), 3);');
             fwrite($handle, $this->nlt(3) . "if (\$this->getParam('url')) {");
@@ -417,7 +416,22 @@ class LazyInstall extends \Lazydev\Core\Controller
         if (filter_input(INPUT_POST, 'createexcluir')) {
             fwrite($handle, $this->nlt(1) . "# Recebe o id via post e exclui $model");
             fwrite($handle, $this->nlt(1) . 'function post_excluir(){');
-            fwrite($handle, $this->nlt(2) . '$this->go(\'' . $model . '/lista\');');
+            fwrite($handle, $this->nlt(2) . 'try {');
+            $params = [];
+            $i = 0;
+            foreach ($pks as $pk) {
+                $params[] = '$this->getParam(' . $i++ . ')';
+            }
+            fwrite($handle, $this->nlt(3) . '$' . $table . ' = new Model' . $model . '(' . implode(', ', $params) . ');');
+            fwrite($handle, $this->nlt(3) . '$' . $table . '->delete();');
+            fwrite($handle, $this->nlt(3) . 'new Msg("Exclusão realizada com sucesso.", 1);');
+            fwrite($handle, $this->nlt(3) . "if (\$this->getParam('url')) {");
+            fwrite($handle, $this->nlt(4) . "\$this->goUrl(\$this->getParam('url'));");
+            fwrite($handle, $this->nlt(3) . "}");
+            fwrite($handle, $this->nlt(3) . '$this->go(\'' . $model . '/lista\');');
+            fwrite($handle, $this->nlt(2) . '} catch (\Exception $e) {');
+            fwrite($handle, $this->nlt(3) . 'new Msg($e->getMessage(), 3);');
+            fwrite($handle, $this->nlt(2) . '}');
             fwrite($handle, $this->nlt(1) . "}\n");
         }
         fwrite($handle, $this->nlt(1) . "}");
@@ -437,6 +451,9 @@ class LazyInstall extends \Lazydev\Core\Controller
         }
         if (filter_input(INPUT_POST, 'createeditar')) {
             $this->createViewCadastrar($table, $dbSchema, 'editar');
+        }
+        if (filter_input(INPUT_POST, 'createexcluir')) {
+            $this->createViewExcluir($table, $dbSchema);
         }
     }
 
@@ -458,19 +475,26 @@ class LazyInstall extends \Lazydev\Core\Controller
             new Msg("Não foi possível criar view/$model/lista.tpl. Verifique as permissões do diretório", 3);
             return;
         }
-        fwrite($handle, '<div class="lista ' . $table . '">');
+        fwrite($handle, '<section class="lista ' . $table . '">');
         fwrite($handle, $this->nlt(1) . "<h2>" . $this->getPlural($model) . "</h2>");
+        fwrite($handle, $this->nlt(1) . '<div>');
+        fwrite($handle, $this->nlt(2) . '<a href="{PATH}/' . $model . '/cadastrar" class="cadastrar">&plus; cadastrar</a>');
+        fwrite($handle, $this->nlt(1) . '</div>');
         fwrite($handle, $this->nlt(1) . "{foreach $" . $table . "s as $" . $sigla . "}");
         $params = '';
         foreach ($pks as $pk) {
             $params .= '{$' . $sigla . '->' . $pk . '}/';
         }
-        fwrite($handle, $this->nlt(2) . '<div> <a href="{PATH}/' . "$model/ver/$params" . '">');
-        fwrite($handle, '{$' . $sigla . '->' . $significativo . '}</a> </div>');
+        fwrite($handle, $this->nlt(2) . '<div class="item">');
+        fwrite($handle, $this->nlt(3) . '<a href="{PATH}/' . "$model/ver/$params" . '" class="">');
+        fwrite($handle, '{$' . $sigla . '->' . $significativo . '}</a>');
+        fwrite($handle, $this->nlt(3) . '<a href="{PATH}/' . "$model/excluir/$params" . '" title="excluir" class="excluir">&#10006;</a>');
+        fwrite($handle, $this->nlt(3) . '<a href="{PATH}/' . "$model/editar/$params" . '" title="editar" class="editar">&#9998;</a>');
+        fwrite($handle, $this->nlt(2) . '</div>');
         fwrite($handle, $this->nlt(1) . "{foreachelse}");
         fwrite($handle, $this->nlt(2) . "<p>Nada para exibir aqui.</p>");
         fwrite($handle, $this->nlt(1) . "{/foreach}");
-        fwrite($handle, $this->nlt(0) . '</div>');
+        fwrite($handle, $this->nlt(0) . '</section>');
         fclose($handle);
     }
 
@@ -492,13 +516,13 @@ class LazyInstall extends \Lazydev\Core\Controller
             new Msg("Não foi possível criar view/$model/ver.tpl. Verifique as permissões do diretório", 3);
             return;
         }
-        fwrite($handle, '<div class="ver ' . $table . '">');
+        fwrite($handle, '<section class="ver ' . $table . '">');
         fwrite($handle, $this->nlt(1) . '<h1>{$' . $table . '->' . $significativo . '}</h1>' . "\n");
         foreach ($fields as $f) {
             if (!filter_input(INPUT_POST, 'ver_' . $f->Field) || $f->Field == $significativo || $f->fk != 0) {
                 continue;
             }
-            fwrite($handle, $this->nlt(1) . '<div>' . $f->Field . ': {$' . $table . '->' . $f->Field . '}</div>');
+            fwrite($handle, $this->nlt(1) . '<div>' . filter_input(INPUT_POST, 'label_' . $f->Field) . ': {$' . $table . '->' . $f->Field . '}</div>');
         }
         foreach ($fks as $fk) {
             if (!filter_input(INPUT_POST, 'ver_' . $fk->fk)) {
@@ -506,7 +530,7 @@ class LazyInstall extends \Lazydev\Core\Controller
             }
             $field = filter_input(INPUT_POST, 'verRef_' . $table . '_' . $fk->fk);
             fwrite($handle, $this->nlt(1) . '<div>');
-            fwrite($handle, $fk->reftable . ': ');
+            fwrite($handle, filter_input(INPUT_POST, 'label_' . $f->Field) . ': ');
             fwrite($handle, '<a href="{PATH}/' . ucfirst($fk->reftable) . '/ver/{$' . $table . '->get' . ucfirst($fk->reftable) . '()->' . $fk->refpk . '}">');
             fwrite($handle, '{$' . $table . '->get' . ucfirst($fk->reftable) . '()->' . $field . '}');
             fwrite($handle, '</a>');
@@ -547,7 +571,7 @@ class LazyInstall extends \Lazydev\Core\Controller
                 }
             }
         }
-        fwrite($handle, $this->nlt(0) . '</div>');
+        fwrite($handle, $this->nlt(0) . '</section>');
         fclose($handle);
     }
 
@@ -569,7 +593,7 @@ class LazyInstall extends \Lazydev\Core\Controller
             new Msg("Não foi possível criar view/$model/$tipo.tpl. Verifique as permissões do diretório", 3);
             return;
         }
-        fwrite($handle, '<form method="post" class="editar ' . $table . '">');
+        fwrite($handle, '<form method="post" class="' . $tipo . ' ' . $table . '">');
         fwrite($handle, $this->nlt(1) . "<h1>" . ucfirst($tipo) . " " . $model . "</h1>");
         foreach ($fields as $f) {
             if ($f->Extra == 'auto_increment') {
@@ -620,6 +644,36 @@ class LazyInstall extends \Lazydev\Core\Controller
         fwrite($handle, $this->nlt(1) . '<div>');
         fwrite($handle, $this->nlt(2) . '<input type="submit" value="salvar">');
         fwrite($handle, $this->nlt(1) . '</div>');
+        fwrite($handle, $this->nlt(0) . '</form>');
+        fclose($handle);
+    }
+
+    private function createViewExcluir(string $table, array $dbSchema)
+    {
+        $tableSchema = $dbSchema[$table];
+        $pks = $tableSchema['pk'];
+        $fks = $tableSchema['fk'];
+        $fields = $tableSchema['fields'];
+        $model = ucfirst($tableSchema['name']);
+        $significativo = filter_input(INPUT_POST, 'campoSignificativo');
+        $sigla = substr($table, 0, 1);
+
+        if (!is_dir('../view/' . $model)) {
+            mkdir('../view/' . $model);
+        }
+        $handle = fopen("../view/$model/excluir.tpl", 'w');
+        if (!$handle) {
+            new Msg("Não foi possível criar view/$model/excluir.tpl. Verifique as permissões do diretório", 3);
+            return;
+        }
+        fwrite($handle, '<form method="post" class="excluir ' . $table . '">');
+        fwrite($handle, $this->nlt(1) . '<h1>Excluir {$' . $table . '->' . $significativo . '}</h1>');
+        fwrite($handle, $this->nlt(1) . '<p>Você tem certeza que deseja excluir este registro?</p>');
+        foreach($pks as $pk){            
+            fwrite($handle, $this->nlt(1) . '<input type="hidden" name="'.$pk.'" value="{$'.$table.'->'.$pk.'}">');
+        }
+        fwrite($handle, $this->nlt(1) . '<input type="submit" value="Sim">');
+        fwrite($handle, $this->nlt(1) . '<a href="{PATH}/'.$model.'/lista">cancelar</a>');
         fwrite($handle, $this->nlt(0) . '</form>');
         fclose($handle);
     }

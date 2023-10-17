@@ -20,6 +20,23 @@ final class Elenco extends \Lazydev\Core\Controller{
         $this->set('elencos', $elencos);
     }
 
+    # Visualiza um(a) Elenco
+    # renderiza a visão /view/Elenco/ver.tpl
+    # url: /Elenco/ver/2
+    function ver(){
+        try {
+            $elenco = new ModelElenco($this->getParam(0), $this->getParam(1));
+            $this->set('elenco', $elenco);
+            $this->setTitle($elenco->cod_filme);
+        } catch (\Exception $e) {
+            new Msg($e->getMessage(), 2);
+            if ($this->getParam('url')) {
+                $this->goUrl($this->getParam('url'));
+            }
+            $this->go('elenco/lista');
+        }
+    }
+
     # Cadastrar Elenco
     # renderiza a visão /view/Elenco/cadastrar.tpl
     # url: /Elenco/cadastrar
@@ -36,7 +53,7 @@ final class Elenco extends \Lazydev\Core\Controller{
         $elenco = new ModelElenco;
         $this->set('elenco', $elenco);
         try {
-            $elenco->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS));
+            $elenco->save(filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS), true);
             new Msg("Cadastro realizado com sucesso.", 1);
             if ($this->getParam('url')) {
                 $this->goUrl($this->getParam('url'));
@@ -91,7 +108,6 @@ final class Elenco extends \Lazydev\Core\Controller{
         try {
             $elenco = new ModelElenco($this->getParam(0), $this->getParam(1));
             $this->set('elenco', $elenco);
-            new Msg("Exclusão realizada com sucesso.", 1);
         } catch (\Exception $e) {
             new Msg($e->getMessage(), 3);
             if ($this->getParam('url')) {
@@ -103,7 +119,17 @@ final class Elenco extends \Lazydev\Core\Controller{
 
     # Recebe o id via post e exclui Elenco
     function post_excluir(){
-        $this->go('Elenco/lista');
+        try {
+            $elenco = new ModelElenco($this->getParam(0), $this->getParam(1));
+            $elenco->delete();
+            new Msg("Exclusão realizada com sucesso.", 1);
+            if ($this->getParam('url')) {
+                $this->goUrl($this->getParam('url'));
+            }
+            $this->go('Elenco/lista');
+        } catch (\Exception $e) {
+            new Msg($e->getMessage(), 3);
+        }
     }
 
     }

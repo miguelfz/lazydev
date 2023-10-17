@@ -35,7 +35,7 @@ abstract class Record
         return $this->{$this::PK};
     }
 
-    public function __set(string $varname, mixed $value)
+    public function __set(string $varname, $value)
     {
         $this->lazyobjectvars[$varname] = $value;
     }
@@ -87,7 +87,7 @@ abstract class Record
      * @param Criteria $criteria
      * @return object[] $obj instância da classe passada no parâmetro $model
      */
-    protected function hasMany(string $model, mixed $FK, Criteria $criteria = NULL)
+    protected function hasMany(string $model, $FK, Criteria $criteria = NULL)
     {
         $model = '\Lazydev\Model\\' . $model;
         $att = $model . 's' . $criteria;
@@ -238,23 +238,28 @@ abstract class Record
      * com os dados recebido pelo formulário<br>
      * 
      * @param array $data Array associativo 'campo'=>'valor'
+     * @param bool $new false: update | true: insert
      * @return boolean
      * @throws Exception
      */
-    public function save(?array $data)
-    {        
+    public function save(?array $data = [], bool $new = false)
+    {
         $this->sanitize();
         $db = new MariaDB();
         $pk = (array)$this::PK;
         $table = $this::TABLE;
         $atts = [];
         $tabledesc = $this->getTableDescription($table);
+        $pkdata = [];
+        foreach ($pk as $p) {
+            $pkdata[$p] = $this->$p;
+        }
         if (!is_null($data) && is_array($data)) {
             foreach ($data as $key => $value) {
                 $this->$key = $value;
             }
         }
-        if (!$this->lazyobjectsavedondatabase) { #salva
+        if ($new) { #salva
             foreach ($tabledesc as $t) {
                 $field = $t->Field;
                 if (isset($this->$field) && trim($this->$field) == '')
@@ -277,7 +282,6 @@ abstract class Record
                 if (empty($this->$field) && $t->Extra == 'auto_increment')
                     $this->$field = $db->lastInsertId();
             }
-            $this->lazyobjectsavedondatabase = true;
             return $result;
         } else { # edita
             foreach ($tabledesc as $t) {
@@ -292,16 +296,20 @@ abstract class Record
             $q .= " WHERE ";
             $pks = [];
             foreach ($pk as $p) {
-                $pks[] = "$p = :$p";
+                $pks[] = "$p = :pk_$p";
             }
             $q .= implode(' AND ', $pks);
             $db->query($q);
             foreach ($atts as $key => $value) {
                 $db->bind(':' . $key, $value);
             }
+            foreach ($pkdata as $key => $value) {
+                $db->bind(':pk_' . $key, $value);
+            }
             $result = $db->execute();
-            if (!$result)
+            if (!$result) {
                 throw new \Exception($db->errorMsg);
+            }
             return $result;
         }
     }
@@ -322,7 +330,6 @@ abstract class Record
         foreach ($data as $key => $value) {
             $this->$key = $data->$key;
         }
-        $this->lazyobjectsavedondatabase = true;
         return true;
     }
 
@@ -341,17 +348,22 @@ abstract class Record
     public function delete()
     {
         $db = new MariaDB();
-        $pk = $this::PK;
+        $pk = (array)$this::PK;
         $table = $this::TABLE;
-        $id = $this->$pk;
-        $db->query("DELETE FROM $table WHERE $pk = :id");
-        $db->bind(':id', $id);
+        $q = "DELETE FROM $table";
+        $q .= " WHERE ";
+        $pks = [];
+        foreach ($pk as $p) {
+            $pks[] = "$p = :$p";
+        }
+        $q .= implode(' AND ', $pks);
+        $db->query($q);
+        foreach ($pk as $p) {
+            $db->bind(':' . $p, $this->$p);
+        }
         $result = $db->execute();
         if (!$result) {
             throw new \Exception($db->errorMsg, 3);
-        }
-        else{
-            $this->lazyobjectsavedondatabase = false;
         }
         return $result;
     }
@@ -492,7 +504,6 @@ abstract class Record
             $db->bind(':' . $c[3], $c[2]);
         }
         $obj =  $db->getRow($class);
-        $obj->lazyobjectsavedondatabase = true;
         return $obj;
     }
 
