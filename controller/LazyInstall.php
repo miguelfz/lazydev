@@ -530,7 +530,7 @@ class LazyInstall extends \Lazydev\Core\Controller
             }
             $field = filter_input(INPUT_POST, 'verRef_' . $table . '_' . $fk->fk);
             fwrite($handle, $this->nlt(1) . '<div>');
-            fwrite($handle, filter_input(INPUT_POST, 'label_' . $f->Field) . ': ');
+            fwrite($handle, filter_input(INPUT_POST, 'label_' . $fk->fk) . ': ');
             fwrite($handle, '<a href="{PATH}/' . ucfirst($fk->reftable) . '/ver/{$' . $table . '->get' . ucfirst($fk->reftable) . '()->' . $fk->refpk . '}">');
             fwrite($handle, '{$' . $table . '->get' . ucfirst($fk->reftable) . '()->' . $field . '}');
             fwrite($handle, '</a>');
