@@ -215,12 +215,6 @@
         </table>
     </div>
 
-    {* especificações página listar *}
-    <div style="padding:30px; border:2px solid #CCC;margin:20px 10px;background:#f9f8f8">
-        <h3>Página listar</h3>
-    </div>
-
-
     {* botão salvar *}
     <div>
         <input type="submit" value="Salvar">
